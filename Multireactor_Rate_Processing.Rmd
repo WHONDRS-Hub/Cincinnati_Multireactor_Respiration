@@ -1,7 +1,7 @@
 ---
-title: "ECA_Optode_Respiration_Sensitivity_Analysis"
+title: "RS_Optode_Respiration"
 author: "MML"
-date: "2024-02-23"
+date: "2024-08-28"
 output: html_document
 ---
 
@@ -33,17 +33,7 @@ library(tidyverse);library(patchwork)
 library(readr); library(pdftools)
 
 ```
-## Read in and clean raw DO data.
-* Remove all missing samples with missing values: 
-  + EC_027_INC-D1, D2, W5 : Bad lighting, overexposed samples
-+ EC_013_INC-D4, W5 : Bad lighting, overexposed samples
-+ EC_014_INC-W5 : Bad lighting, overexposed samples
-+ EC_072_INC-D5, W5 : Not enough sample for five replicates
-+ EC_091_INC-D5 : Sample fell off rollers at this time
-+ EC_014_INC-W1 : Bad measurements for first 6 minutes
-+ EC_011-W and EC_012-W : Too much water added at beginning of 21-day incubation
 
-51 - D1 - weird values
 
 ```{r Load and Clean Data, include = FALSE}
 
