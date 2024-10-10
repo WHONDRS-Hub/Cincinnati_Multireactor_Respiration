@@ -43,10 +43,10 @@ rm(list=ls());graphics.off()
 #Example:
 pnnl.user = 'laan208'
 
-input.path = "C:/Github/Cincinnati/Data/RS_INC_Raw_DO_By_Min_ReadyForBoye_2024-08-28.csv"
+input.path = "C:/Github/Cincinnati_Multireactor_Respiration/Data/RS_INC_Raw_DO_By_Min_ReadyForBoye_2024-08-28.csv"
 
 
-output.path = "C:/Github/Cincinnati/Data/"
+output.path = "C:/Github/Cincinnati_Multireactor_Respiration/Data/"
 
 
 data = read.csv(input.path)
@@ -773,62 +773,19 @@ combine_hist = ggplot() +
 
 ```
 ```{r Non Linear Fits}
-
-
-# Define the function to fit the nls model and generate the plot
-fit_and_plot <- function(data) {
-  sample_name <- unique(data$Sample_Name)
-  
-  # Define the nls model with starting parameters
-  nls_model <- nls(DO_mg_per_L ~ a * exp(b * Elapsed_Minute), data = data, start = list(a = 8.5, b = -0.01))
-  
-  # Extract the coefficients from the model
-  coef_vals <- coef(nls_model)
-  
-  # Create a data frame for plotting the fitted model
-  fitted_data <- data
-  fitted_data$Fitted = predict(nls_model, newdata = data)
-  
-  # Generate the plot
-  p <- ggplot(data, aes(x = Elapsed_Minute, y = DO_mg_per_L)) +
-    geom_point(color = 'blue') +
-    geom_line(aes(y = Fitted), color = 'red') +
-    labs(title = paste("Sample:", sample_name),
-         subtitle = paste("a =", round(coef_vals[1], 4), ", b =", round(coef_vals[2], 4)),
-         x = "Elapsed Minute",
-         y = "DO mg/L") +
-    theme_minimal()
-  
-  return(p)
-}
-
-
-
-# Apply the function to each distinct sample and collect plots
-plots <- data %>%
-  group_by(Sample_Name) %>%
-  do(plot = fit_and_plot(.)) 
-
-# Export the plots to a multi-page PDF
-pdf("C:/GitHub/Cincinnati_Multireactor_Respiration/Data/Plots/Non_Linear_Fits/non_linear_plots.pdf")
-for (i in 1:nrow(plots)) {
-  plot(plots$plot[[i]])
-}
-dev.off()
-
 # Make Data Frames
-non_linear_fit <- as.data.frame(matrix(NA, ncol = 6, nrow =1))
+non_linear_fit <- as.data.frame(matrix(NA, ncol = 7, nrow =1))
 
-colnames(non_linear_fit) = c("Sample_Name","b", "DO_mg_per_L_max", "p_value_a", "p_value_b", "total_incubation_time_min")
+colnames(non_linear_fit) = c("Sample_Name","b", "DO_mg_per_L_max", "p_value_a", "p_value_b", "total_incubation_time_min", "R_Squared")
 
 
 unique.incubations = unique(data$Sample_Name)
 
   for (j in 1:length(unique.incubations)){
     
-    rate = as.data.frame(matrix(NA, ncol = 6, nrow = length(unique(data$Sample_Name))))
+    rate = as.data.frame(matrix(NA, ncol = 7, nrow = length(unique(data$Sample_Name))))
   
-  colnames(rate) = c("Sample_Name","b", "DO_mg_per_L_max", "p_value_a", "p_value_b", "total_incubation_time_min")
+  colnames(rate) = c("Sample_Name","b", "DO_mg_per_L_max", "p_value_a", "p_value_b", "total_incubation_time_min", "R_Squared")
     
     # Subset by individual sites
     
@@ -845,20 +802,24 @@ unique.incubations = unique(data$Sample_Name)
     coef_vals = coef(fit_all)
     p_value_a = summary(fit_all)$coefficients[7]
     p_value_b = summary(fit_all)$coefficients[8]
-
+  AIC(fit_all)  
+    
+  
+    
     data_site_subset_fit = data_site_subset %>% 
       mutate(Fitted = predict(fit_all, new_data = data_site_subset_fit))
     
-    fit_plot = ggplot(data_site_subset_fit, aes(x = Elapsed_Minute, y = DO_mg_per_L)) +
-    geom_point(color = 'blue') +
-    geom_line(aes(y = Fitted), color = 'red') +
-    labs(title = paste("Sample:", data_site_subset_fit$Sample_Name[1]),
-         subtitle = paste("a =", round(coef_vals[1], 4), ", b =", round(coef_vals[2], 4)),
-         x = "Elapsed Minute",
-         y = "DO mg/L") +
-    theme_minimal()
+    # fit_plot = ggplot(data_site_subset_fit, aes(x = Elapsed_Minute, y = DO_mg_per_L)) +
+    # geom_point(color = 'blue') +
+    # geom_line(aes(y = Fitted), color = 'red') +
+    # labs(title = paste("Sample:", data_site_subset_fit$Sample_Name[1]),
+    #      subtitle = paste("a =", round(coef_vals[1], 4), ", b =", round(coef_vals[2], 4), ", R2 =", 
+    #                       R_Squared),
+    #      x = "Elapsed Minute",
+    #      y = "DO mg/L") +
+    # theme_minimal()
     
-    ggsave(file=paste0("C:/GitHub/Cincinnati_Multireactor_Respiration/Data/Plots/Non_Linear_Fits/",data_site_subset_fit$Sample_Name[1],".pdf"), width = 7, height = 7, units = "in")
+   # ggsave(file=paste0("C:/GitHub/Cincinnati_Multireactor_Respiration/Data/Plots/Non_Linear_Fits/",data_site_subset_fit$Sample_Name[1],".pdf"), width = 7, height = 7, units = "in")
     
     rate$Sample_Name[j] = as.character(data_site_subset_fit$Sample_Name[1])
     rate$b[j] = as.numeric((coef_vals[2])) #in 1/ min
@@ -867,6 +828,8 @@ unique.incubations = unique(data$Sample_Name)
     rate$p_value_b[j] = p_value_b
     
     rate$total_incubation_time_min[j] = as.numeric(tail(data_site_subset_fit$Elapsed_Minute, n = 1) - head(data_site_subset_fit$Elapsed_Minute, n = 1)) 
+    
+    rate$R_Squared[j] = R_Squared
     
     
   rate = rate[!is.na(rate$Sample_Name),]   
@@ -877,18 +840,15 @@ unique.incubations = unique(data$Sample_Name)
 
 non_linear_fit = non_linear_fit[-1,]
 
+setwd("C:/GitHub/Cincinnati_Multireactor_Respiration/Data/Plots/Non_Linear_Fits/")
+
+#ex_pdf = list.files(path = "C:/GitHub/Cincinnati_Multireactor_Respiration/Data/Plots/Non_Linear_Fits/", pattern = "pdf")
+
 ex_pdf = list.files(pattern = "pdf")
 
 
-ex_pdf1 <- head(ex_pdf, 275)
-ex_pdf2 <- tail(ex_pdf, 278)
 
-pdf_combine(ex_pdf1, output = "First_Half.pdf")
-
-pdf_combine(ex_pdf2,  output = "Second_Half.pdf")
- 
-all_pdf <- list.files(pattern = "Half.pdf")
-pdf_combine(ex_pdf, output = "EV_All_Fits.pdf")
+pdf_combine(ex_pdf, output = "C:/GitHub/Cincinnati_Multireactor_Respiration/Data/Plots/Non_Linear_Fits/RS_All_Non_Linear_Fits.pdf")
 
 
 ```
