@@ -30,7 +30,7 @@ library(ggpubr);library(reshape2);library(ggpmisc)
 library(segmented);library(broom);library(lmtest);library(car); library(corrplot)
 library(ggpmisc);library(lubridate); library(readxl); library(glmnet)
 library(tidyverse);library(patchwork)
-library(readr); library(pdftools)
+library(readr); library(pdftools); library(minpack.lm); library(AICcmodavg)
 
 ```
 
@@ -108,7 +108,7 @@ high.slope.thresh = -0.04
 time.same = 7
 break.toggle = 1.4
 conc.range = 1.4
-plot.toggle = TRUE
+plot.toggle = FALSE
 
 ```
 ## Fit a linear model to data with chosen rules
@@ -618,166 +618,12 @@ output.path = paste0("C:/Users/",pnnl.user,"/OneDrive - PNNL/Shared Documents - 
 write.csv(boye, paste0("C:/GitHub/Cincinnati_Multireactor_Respiration/Data/RS_Sediment_Incubations_Respiration_Rates_ReadyForBoye_",Sys.Date(),".csv"), row.names = F)
 
 ```
-## Remove Outlier Samples 
-* A distance matrix is used to remove the replicate most unlike the others if the coefficient of variation is greater than 50%
 
-```{r Remove Outliers}
-## Start of sensitivity analysis for which CV and n() is used to keep/remove replicates
-
-## Did not end up using these because we published as medians, but keeping here for consistency
-
-#Remove RR with -9999, calculate CV for replicates for mg/L and mg/kg values
-
-cv <- boye_dev %>% 
-  mutate(Treat = case_when(grepl("W",Sample_Name)~"Wet",
-                           grepl("D", Sample_Name) ~"Dry")) %>% 
-  separate(Sample_Name, c("Sample_ID", "Replicate"), sep = -1, remove = FALSE) %>% 
-  filter(Respiration_Rate_mg_DO_per_L_per_H > -9999) %>% 
-  group_by(Sample_ID, Treat) %>% 
-  mutate(cv_before_removal_L = abs(sd(Respiration_Rate_mg_DO_per_L_per_H)/mean(Respiration_Rate_mg_DO_per_L_per_H))*100) %>% 
-  mutate(cv_before_removal_kg = abs(sd(Respiration_Rate_mg_DO_per_kg_per_H)/mean(Respiration_Rate_mg_DO_per_kg_per_H))*100) %>% 
-  mutate(cv_diff = cv_before_removal_L - cv_before_removal_kg)
-
-## Start data frame for removals, calculate means of replicate samples
-
-slope.outliers <- cv %>% 
-  unite(kit_treat, Sample_ID, Treat, sep = "_", remove = FALSE) %>% 
-  mutate(Respiration_Rate_mg_DO_per_L_per_H = as.numeric(Respiration_Rate_mg_DO_per_L_per_H)) %>%
-  group_by(Sample_ID, Treat) %>% 
-  mutate(Mean_Slope_All_L = mean(Respiration_Rate_mg_DO_per_L_per_H)) %>% 
-  mutate(Mean_Slope_All_kg = mean(Respiration_Rate_mg_DO_per_kg_per_H)) %>% 
-  ungroup() %>% 
-  dplyr::select(c(Sample_Name, Respiration_Rate_mg_DO_per_L_per_H,Respiration_Rate_mg_DO_per_kg_per_H, Mean_Slope_All_L, Mean_Slope_All_kg, cv_before_removal_L, cv_before_removal_kg, kit_treat)) %>% 
-  drop_na(Respiration_Rate_mg_DO_per_kg_per_H)
-
-slope.outliers$flag <- NA
-
-slope.final <- as.data.frame(matrix(NA, ncol = 11, nrow =1))
-
-colnames(slope.final) = c("slope.temp","Sample_Name", "kit_treat", "Respiration_Rate_mg_DO_per_L_per_H", "Mean_Slope_All_L", "Mean_Slope_All_kg", "cv_before_removal_L", "cv_before_removal_kg", "cv_after_removal", "Mean_Slope_Removed", "flag")
-
-unique.samples = unique(slope.outliers$kit_treat)
-
-#try 0, 10, 30, 50, 100, export histograms of removals, effect sizes
-cv.threshold = 0
-
-#try keeping n = 3,4 samples
-rem.threshold = 5
-
-for (i in 1:length(unique.samples)) {
-  
-  ## Subset replicates
-  data_subset = subset(slope.outliers, slope.outliers$kit_treat == unique.samples[i])
-  
-  ## Pull out Rate values
-  #slope.temp = as.numeric(data_subset$Respiration_Rate_mg_DO_per_L_per_H)
-  slope.temp = as.numeric(data_subset$Respiration_Rate_mg_DO_per_kg_per_H)
-  
-  ## Calculate standard deviation, average, and coefficient of variation of rates
-  slope.temp.sd <- sd(slope.temp)
-  slope.temp.mean <- mean(slope.temp)
-  CV = abs((slope.temp.sd/slope.temp.mean)*100)
-  
-  #looping to get 3 out of 5 best samples
-  for (sample.reduction in 1:5)  {
-    
-    if (slope.temp.mean == 0) {
-      
-      CV = 0
-      
-    }
-    
-    else if (length(slope.temp) > rem.threshold & CV >= cv.threshold) {
-      
-      dist.temp = as.matrix(abs(dist(slope.temp)))
-      dist.comp = numeric()
-      
-      for(slope.now in 1:ncol(dist.temp)) {
-        
-        dist.comp = rbind(dist.comp,c(slope.now,sum(dist.temp[,slope.now])))
-        
-      }
-      
-      dist.comp[,2] = as.numeric(dist.comp[,2])
-      slope.temp = slope.temp[-which.max(dist.comp[,2])]
-      
-      slope.temp.sd <- sd(slope.temp)
-      slope.temp.mean <- mean(slope.temp)
-      slope.temp.cv <- abs((slope.temp.sd/slope.temp.mean)*100)
-      CV = slope.temp.cv
-      slope.temp.range <- max(slope.temp) - min(slope.temp)
-      range = slope.temp.range
-      
-    }
-  }
-  
-  if (length(slope.temp) >= 3) {
-    
-    slope.combined <- as.data.frame(slope.temp)
-    
-    slope.removed <- merge(slope.combined, data_subset, by.x = "slope.temp", by.y = "Respiration_Rate_mg_DO_per_kg_per_H", all.x = TRUE)
-    
-    slope.removed <- slope.removed[!duplicated(slope.removed$Sample_Name), ]
-    
-    slope.removed$cv_after_removal = as.numeric(abs((sd(slope.temp)/mean(slope.temp))*100))
-    
-    slope.removed$Mean_Slope_Removed = as.numeric(mean(slope.temp))
-    
-  }
-  
-  slope.final = rbind(slope.removed, slope.final)
-  
-  rm('slope.temp')
-}
-
-## This data frame has removed samples
-slope.final.flag <- slope.final %>% 
-  mutate(flag = if_else(cv_before_removal_kg < cv_after_removal, "Issue in dropping sample", "N/A")) %>% 
-  rename(Respiration_Rate_mg_DO_per_kg_per_H = slope.temp) %>% 
-  relocate(Respiration_Rate_mg_DO_per_kg_per_H, .after = Sample_Name)
-
-outliers_flag <- left_join(boye_dev, slope.final.flag, by = c("Sample_Name", "Respiration_Rate_mg_DO_per_L_per_H", "Respiration_Rate_mg_DO_per_kg_per_H")) %>% 
-  #mutate(Methods_Deviation_flag = ifelse(cv_before_removal_L > 50,  "RATE_CV_050", NA)) %>%  
-   #mutate(Methods_Deviation_outlier = ifelse(is.na(cv_before_removal_L) & is.na(Mean_Slope_All_L) & Respiration_Rate_mg_DO_per_L_per_H != -9999, "RATE_CV_050; RATE_CV_000", NA)) %>% 
-  #mutate(Methods_Deviation_flag = ifelse(!is.na(Methods_Deviation_flag), Methods_Deviation_flag, Methods_Deviation_outlier)) %>% 
-  #mutate(Methods_Deviation = ifelse(Methods_Deviation == "N/A", Methods_Deviation_flag, paste(Methods_Deviation, Methods_Deviation_flag, sep = "; "))) %>% 
-  mutate(Methods_Deviation = ifelse(is.na(Methods_Deviation), "N/A", Methods_Deviation)) %>% 
-    mutate(Methods_Deviation = ifelse(grepl("INC_008", Methods_Deviation), "INC_008", Methods_Deviation)) %>% 
-  dplyr::select(-c(Mean_Slope_All_L, Mean_Slope_All_kg, cv_before_removal_L, cv_before_removal_kg, kit_treat, cv_after_removal, Mean_Slope_Removed, flag, Initial_Gravimetric_Moisture, Final_Gravimetric_Moisture)) %>% 
-  mutate(DO_Concentration_At_Incubation_Time_Zero = round(as.numeric(DO_Concentration_At_Incubation_Time_Zero), 2)) 
-
-cv.threshold = 50
-rem.threshold = 3
-
-eca_respiration_all_final = outliers_flag %>% 
-  mutate(Methods_Deviation = str_replace(Methods_Deviation, "; NA", "")) %>% 
-  mutate(Methods_Deviation)
-  
-hist = ggplot(boye, aes(x = abs(as.numeric(Respiration_Rate_mg_DO_per_kg_per_H)))) +
-  geom_histogram()
-
-eca = read.csv("C:/GitHub/ECA_Multireactor_Incubations/Data/EC_Sediment_SpC_pH_Temp_Respiration.csv", skip = 2) %>% 
-  filter(grepl("EC", Sample_Name)) %>% 
-  filter(Respiration_Rate_mg_DO_per_kg_per_H != "-9999") %>% 
-  mutate(Respiration_Rate_mg_DO_per_kg_per_H = as.numeric(Respiration_Rate_mg_DO_per_kg_per_H)) %>% 
-  filter(Respiration_Rate_mg_DO_per_kg_per_H > -200)
-
-eca_hist = ggplot(eca, aes(x = abs(as.numeric(Respiration_Rate_mg_DO_per_kg_per_H)))) +
-  geom_histogram()
-
-combine_hist = ggplot() +
-  geom_histogram(eca,binwidth = 1, mapping = aes(x = abs(as.numeric(Respiration_Rate_mg_DO_per_kg_per_H)))) +
-  geom_histogram(boye, binwidth = 1, fill = "red", mapping = aes(x = abs(as.numeric(Respiration_Rate_mg_DO_per_kg_per_H))))
-  
-  
-
-```
 ```{r Non Linear Fits}
 # Make Data Frames
 non_linear_fit <- as.data.frame(matrix(NA, ncol = 7, nrow =1))
 
 colnames(non_linear_fit) = c("Sample_Name","b", "DO_mg_per_L_max", "p_value_a", "p_value_b", "total_incubation_time_min", "R_Squared")
-
 
 unique.incubations = unique(data$Sample_Name)
 
@@ -789,36 +635,45 @@ unique.incubations = unique(data$Sample_Name)
     
     # Subset by individual sites
     
-    data_site_subset = subset(data, data$Sample_Name == unique.incubations[j])
+    data_site_subset = subset(data, data$Sample_Name == unique.incubations[i])
     
     # Put in ascending order for minutes
     data_site_subset = data_site_subset[order(data_site_subset$Elapsed_Minute, decreasing = FALSE),]
     data_site_subset$Elapsed_Minute = as.numeric(data_site_subset$Elapsed_Minute)
     
     # Fit linear model to all data
-    
-    fit_all = nls(DO_mg_per_L ~ a * exp(b * Elapsed_Minute), data = data_site_subset, start = list(a = max(data_site_subset$DO_mg_per_L), b = -0.01))
-    
+# 
+#       Elapsed_Minute = 1:120
+#       DO_mg_per_L = 8*exp(-0.02*t)
+#       Sample_Name = "Test"
+#     data_site_subset = as.data.frame(tibble(Elapsed_Minute = Elapsed_Minute, DO_mg_per_L = DO_mg_per_L, Sample_Name = Sample_Name))
+
+    fit_all = nlsLM(DO_mg_per_L ~ (a * exp(b * Elapsed_Minute)), data = data_site_subset, start = list(a = max(data_site_subset$DO_mg_per_L), b = -0.001))
+
+
     coef_vals = coef(fit_all)
     p_value_a = summary(fit_all)$coefficients[7]
     p_value_b = summary(fit_all)$coefficients[8]
-  AIC(fit_all)  
-    
-  
-    
-    data_site_subset_fit = data_site_subset %>% 
+  AIC(fit_all)
+
+
+      data_site_subset_fit = data_site_subset %>%
       mutate(Fitted = predict(fit_all, new_data = data_site_subset_fit))
+
+    fit_plot = ggplot(data_site_subset_fit, aes(x = Elapsed_Minute, y = DO_mg_per_L)) +
+    geom_point(color = 'blue') +
+    geom_line(aes(y = Fitted), color = 'red') +
+    labs(title = paste("Sample:", data_site_subset_fit$Sample_Name[1]),
+         subtitle = paste("a =", round(coef_vals[1], 4), ", b =", round(coef_vals[2], 4)),
+         x = "Elapsed Minute",
+         y = "DO mg/L") +
+    theme_minimal()
     
-    # fit_plot = ggplot(data_site_subset_fit, aes(x = Elapsed_Minute, y = DO_mg_per_L)) +
-    # geom_point(color = 'blue') +
-    # geom_line(aes(y = Fitted), color = 'red') +
-    # labs(title = paste("Sample:", data_site_subset_fit$Sample_Name[1]),
-    #      subtitle = paste("a =", round(coef_vals[1], 4), ", b =", round(coef_vals[2], 4), ", R2 =", 
-    #                       R_Squared),
-    #      x = "Elapsed Minute",
-    #      y = "DO mg/L") +
-    # theme_minimal()
+    hmr
     
+    lin = ggplot(data_site_subset_fit, aes(x = log(DO_mg_per_L), y =t)) + 
+      geom_point()
+
    # ggsave(file=paste0("C:/GitHub/Cincinnati_Multireactor_Respiration/Data/Plots/Non_Linear_Fits/",data_site_subset_fit$Sample_Name[1],".pdf"), width = 7, height = 7, units = "in")
     
     rate$Sample_Name[j] = as.character(data_site_subset_fit$Sample_Name[1])
@@ -849,6 +704,173 @@ ex_pdf = list.files(pattern = "pdf")
 
 
 pdf_combine(ex_pdf, output = "C:/GitHub/Cincinnati_Multireactor_Respiration/Data/Plots/Non_Linear_Fits/RS_All_Non_Linear_Fits.pdf")
+
+
+```
+```{r Combine Linear and Non-Linear fits}
+# Make Data Frames
+
+# Make Data Frames
+respiration <- as.data.frame(matrix(NA, ncol = 10, nrow =1))
+
+#try just no breaks and adding linear regression - because notthing being removed in code as is
+
+colnames(respiration) = c("Sample_Name", "linear_slope", "linear_p_value", "DO_mg_per_L_max","b", "p_value_a", "p_value_b", "total_incubation_time_min", "linear_AIC", "non_linear_AIC")
+
+unique.incubations = unique(samples$Sample_Name)
+
+for (j in 1:length(unique.incubations)){
+    
+  rate <- as.data.frame(matrix(NA, ncol = 10, nrow =1))
+
+  colnames(rate) = c("Sample_Name", "linear_slope", "linear_p_value", "DO_mg_per_L_max","b", "p_value_a", "p_value_b", "total_incubation_time_min", "linear_AIC", "non_linear_AIC")
+  
+    # Subset by individual sites
+    
+    data_site_subset = subset(samples, samples$Sample_Name == unique.incubations[j])
+    
+    # Put in ascending order for minutes
+    data_site_subset = data_site_subset[order(data_site_subset$Elapsed_Minute, decreasing = FALSE),]
+    data_site_subset$Elapsed_Minute = as.numeric(data_site_subset$Elapsed_Minute)
+    
+     # Remove points greater than High Dissolved Oxygen Threshold
+    
+    data_site_subset_low = data_site_subset %>% 
+      filter(DO_mg_per_L < high.do) 
+    
+   
+    # Remove samples if at > 4 minutes, they are below the DO threshold. This is removing low values from the back end of curves
+    
+    data_site_subset_thresh = data_site_subset_low %>% 
+      filter(!(Elapsed_Minute > 4 & DO_mg_per_L < do.thresh)) 
+    
+    data_site_subset_rem = data_site_subset_thresh
+    
+    # If the 2 minute concentration is less than the Dissolved Oxygen Threshold set to remove low values from the back end of the curve, remove anything greater than 2 minutes
+    
+    for(n in 1:2){
+      if(data_site_subset_rem$Elapsed_Minute[2] == 2 & data_site_subset_rem$DO_mg_per_L[2] <= do.thresh){
+        
+        data_site_subset_rem = data_site_subset_rem %>% 
+          filter(!Elapsed_Minute > 2 )
+        
+      }
+    }
+    
+    # Keep saturation point from samples with 2 minute point that starts below set threshold. 
+    
+    data_site_subset_fast = data_site_subset_rem
+    
+    
+    if (data_site_subset_fast$DO_mg_per_L[2] <= fast & data_site_subset_fast$Elapsed_Minute[2] <= time.thresh ){
+      
+      data_site_subset_fast = data_site_subset_fast
+      
+    } else if (data_site_subset_fast$DO_mg_per_L[2] >= fast){
+      
+      data_site_subset_fast = data_site_subset_fast[-1,]
+      
+    }
+    
+    # Remove 2 minute point if put on at same time as picture is taken
+    
+    data_site_subset_beg = data_site_subset_fast
+    
+    for (k in 1:2) {
+      
+      if (nrow(data_site_subset_beg) <= 2) {
+        
+        # If dataset only consists of 0 minute and 2 minute point, don't remove data
+        
+        data_site_subset_beg = data_site_subset_beg
+        
+      }
+      
+      else if (grepl("RATE_006", data_site_subset_beg$Methods_Deviation[k]) & ((data_site_subset_beg$DO_mg_per_L[k] > time.same & data_site_subset_beg$Elapsed_Minute[k] == 2))) {
+        
+        ## If samples were put on roller the same time as a picture was taken (indicated by RATE_006 Method Deviation) and the dissolved oxygen concentration is greater than the set threshold at the 2 minute measurement, remove the 2 minute point 
+        
+        data_site_subset_beg = data_site_subset_beg[-k,]
+        
+      }
+      
+    }
+    
+    # If the first point is 0, only keep 2 points 
+    
+    if (data_site_subset_beg$Elapsed_Minute[1] == 0) {
+      
+      data_site_subset_beg = head(data_site_subset_beg, 2)
+      
+    }
+    
+    # Fit linear model to cleaned data (low points removed, high points removed, first point removed if put on rollers at same time as picture) 
+    
+    
+    fit_linear = lm(DO_mg_per_L~Elapsed_Minute, data = data_site_subset_beg)
+    
+    rate$Sample_Name[1] = as.character(data_site_subset_beg$Sample_Name[1])
+    rate$linear_slope[1] = fit_linear$coefficients[[2]]
+    rate$linear_p_value[1] = summary(fit_linear)$coefficients[4]
+    rate$total_incubation_time_min[1] = as.numeric(tail(data_site_subset_beg$Elapsed_Minute, n = 1) - head(data_site_subset_beg$Elapsed_Minute, n = 1))
+   
+     model_linear = list(fit_linear)
+    mod.names.linear =  c("linear")
+    
+     rate$linear_AIC[1] = aictab(cand.set = model_linear, modnames = mod.names.linear)$AICc
+  
+      # Fit non-linear model to cleaned data
+
+    fit_non_linear = nlsLM(DO_mg_per_L ~ (a * exp(b * Elapsed_Minute)), data = data_site_subset_beg, start = list(a = max(data_site_subset_beg$DO_mg_per_L), b = -0.001))
+   
+    coef_vals = coef(fit_non_linear)
+    
+    rate$b[1] = round(as.numeric((coef_vals[2])), 3)
+    
+    rate$p_value_a[1] = summary(fit_non_linear)$coefficients[7]
+    
+    rate$p_value_b[1] = summary(fit_non_linear)$coefficients[8]
+    
+    rate$DO_mg_per_L_max[1] = round(as.numeric((coef_vals[1])), 3)
+    
+     model_nonlinear = list(fit_non_linear)
+    mod.names.nonlinear =  c("nonlinear")
+    
+    rate$non_linear_AIC = aictab(cand.set = model_nonlinear, modnames = mod.names.nonlinear)$AICc
+  
+      data_site_subset_fit = data_site_subset_beg %>%
+      mutate(Fitted = predict(fit_non_linear, new_data = data_site_subset_fit))
+      
+       my.format <- "Slope: %s\nR2: %s\np: %s"  
+    my.formula <- y ~ x
+
+    fit_plot = ggplot(data_site_subset_fit, aes(x = Elapsed_Minute, y = DO_mg_per_L)) +
+    geom_point(color = 'black') +
+    geom_smooth(method = "lm", se = F, formula = my.formula, aes(color = 'Linear')) +
+    geom_line(aes(y = Fitted, color = 'Non-Linear')) +
+     geom_label(aes(x = 30, y = max(DO_mg_per_L + 0.5)), size = 2.5, hjust = 0,
+      label = 
+        paste("Linear Slope = ", fit_linear$coefficients[[2]],
+      " Linear AIC = ", paste(aictab(cand.set = model_linear, modnames = mod.names.linear)$AICc), 
+      "\nNon Linear B = ", as.numeric((coef_vals[2])), 
+      " Non-Linear AIC = ", aictab(cand.set = model_nonlinear, modnames = mod.names.nonlinear)$AICc)) + 
+      scale_color_manual(name = "Fit", values = c("blue", "red")) +
+    theme(legend.background = element_rect(fill = 'NA'), legend.text = element_text(size = 12,face="bold"))+
+    theme_minimal()
+
+   ggsave(file=paste0("C:/GitHub/Cincinnati_Multireactor_Respiration/Data/Plots/Combined_Plots/",data_site_subset_fit$Sample_Name[1],".pdf"), width = 7, height = 7, units = "in")
+    
+  rate = rate[!is.na(rate$Sample_Name),]   
+  # Combining the regression metrics across locations and unique incubations
+ respiration = rbind(respiration,rate)
+    
+  }
+
+respiration = respiration[!is.na(respiration$Sample_Name),] 
+
+respiration$AIC_Diff = round(respiration$linear_AIC - respiration$non_linear_AIC, 3)
+
+write.csv(respiration, paste0(output.path,"Combined_Fits_RS_Sediment_Incubations_Respiration_Rates_",Sys.Date(),".csv"), row.names = F)
 
 
 ```
