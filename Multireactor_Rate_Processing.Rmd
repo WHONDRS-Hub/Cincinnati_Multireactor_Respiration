@@ -848,12 +848,13 @@ for (j in 1:length(unique.incubations)){
     geom_point(color = 'black') +
     geom_smooth(method = "lm", se = F, formula = my.formula, aes(color = 'Linear')) +
     geom_line(aes(y = Fitted, color = 'Non-Linear')) +
+      ggtitle(data_site_subset_fit$Sample_Name[1]) +
      geom_label(aes(x = 30, y = max(DO_mg_per_L + 0.5)), size = 2.5, hjust = 0,
-      label = 
-        paste("Linear Slope = ", fit_linear$coefficients[[2]],
-      " Linear AIC = ", paste(aictab(cand.set = model_linear, modnames = mod.names.linear)$AICc), 
-      "\nNon Linear B = ", as.numeric((coef_vals[2])), 
-      " Non-Linear AIC = ", aictab(cand.set = model_nonlinear, modnames = mod.names.nonlinear)$AICc)) + 
+      label = paste(
+        "Linear Slope = ", round(fit_linear$coefficients[[2]], 3),
+        " Linear AIC = ", round(aictab(cand.set = model_linear, modnames = mod.names.linear)$AICc, 3), 
+      "\nNon Linear B = ", round(as.numeric((coef_vals[2])),3), 
+      " Non-Linear AIC = ", round(aictab(cand.set = model_nonlinear, modnames = mod.names.nonlinear)$AICc),3)) + 
       scale_color_manual(name = "Fit", values = c("blue", "red")) +
     theme(legend.background = element_rect(fill = 'NA'), legend.text = element_text(size = 12,face="bold"))+
     theme_minimal()
