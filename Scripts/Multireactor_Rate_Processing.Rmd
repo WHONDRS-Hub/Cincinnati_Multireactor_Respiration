@@ -710,12 +710,6 @@ ggplot(plot_df, aes(x = (b), fill = Material)) +
 
 
 ```
-```{r compare linear vs. non linear}
-
-
-
-```
-
 
 ```{r Combine Linear and Non-Linear fits}
 # Make Data Frames
@@ -909,24 +903,29 @@ com = left_join(plot_df, boye, by = "Sample_Name") %>%
 com = com %>% left_join(hmr, by = "Sample_Name")
 
 com %>% 
-  filter(Respiration_Rate_mg_DO_per_kg_per_H > -50) %>% 
+ # filter(Respiration_Rate_mg_DO_per_kg_per_H > -50) %>% 
 ggplot(aes(x = Respiration_Rate_mg_DO_per_kg_per_H, y = b_hour, color = Material.x)) + 
   geom_point() + 
+  scale_color_manual(values = c("Soil" = "#0072B2", "Sediment" = "#D55E00")) +
   ylab(bquote("b (hour"^-1 *")")) + 
   guides(color = guide_legend("Material"))+
   theme_bw()
 
 com %>% 
-  filter(Respiration_Rate_mg_DO_per_kg_per_H > -50) %>% 
-  filter(f0 >-100) %>% 
+  #filter(Respiration_Rate_mg_DO_per_kg_per_H > -50) %>% 
+  #filter(f0 >-100) %>% 
 ggplot(aes(x = Respiration_Rate_mg_DO_per_kg_per_H, y = f0)) + 
   geom_point(aes(color = Material.x))+ 
+  scale_color_manual(values = c("Soil" = "#0072B2", "Sediment" = "#D55E00")) +
   guides(color = guide_legend("Material"))+
   theme_bw()
 
-ggplot(com, aes(y = b_hour, x = f0)) + 
+com %>% 
+  filter(f0 > -100) %>% 
+ggplot(aes(y = b_hour, x = f0)) + 
   geom_point(aes(color = Material.x))+ 
   ylab(bquote("b (hour"^-1 *")")) + 
+  scale_color_manual(values = c("Soil" = "#0072B2", "Sediment" = "#D55E00")) +
   guides(color = guide_legend("Material"))+
   theme_bw()
 
