@@ -95,21 +95,21 @@ data = read.csv(input.path)
 ```{r Set Parameters}
 
 min.points = 2
-slope.thresh = 0 # in eca = -0.006
+slope.thresh = -0.006 
 do.thresh = 2
 high.do = 14
 time.thresh = 4
 fast = 5.5 #not applicable here
 bpfit = 0.1
 time.same = 7
-break.toggle = 1 #in eca 1.4
-conc.range = 0 #in eca 1.4
+break.toggle = 1.4 #in eca 1.4
+conc.range = 1.4 #in eca 1.4
 plot.toggle = FALSE
 
 ```
 ## Fit a linear model to data with chosen rules
 
-```{r Start Loop for fitting Linear Models, echo = FALSE, warning = FALSE, message = FALSE, fig.height = 8, fig.wight = 8}
+```{r Start Loop for fitting Linear Models with original rules, echo = FALSE, warning = FALSE, message = FALSE, fig.height = 8, fig.wight = 8}
 
 # Remove missing data points, if at 2 min, value is below LOD, make starting DO 1/2 LOD
 samples = data %>% 
@@ -119,9 +119,9 @@ samples = data %>%
   
 
 # Make Data Frames
-respiration <- as.data.frame(matrix(NA, ncol = 17, nrow =1))
+respiration <- as.data.frame(matrix(NA, ncol = 18, nrow =1))
 
-colnames(respiration) = c("Sample_Name","slope_of_the_regression", "rate_mg_per_L_per_min", "rate_mg_per_L_per_h", "R_squared", "R_squared_adj",  "p_value", "total_incubation_time_min", "number_of_points", "no_points_rem",  "breusch_p_value","break_point", "slope_ratio",  "0_min_concentration", "2_min_concentration", "last_concentration", "theoretical")
+colnames(respiration) = c("Sample_Name","slope_of_the_regression", "rate_mg_per_L_per_min", "rate_mg_per_L_per_h", "R_squared", "R_squared_adj",  "p_value", "total_incubation_time_min", "number_of_points", "no_points_rem",  "breusch_p_value","break_point", "slope_ratio",  "0_min_concentration", "2_min_concentration", "last_concentration", "theoretical", "mean_squared_error")
 rate = as.data.frame(matrix(NA, ncol = 14, nrow = length(unique(samples$Sample_Name))))
   
   colnames(rate) = c("Sample_Name", "slope_of_the_regression", "rate_mg_per_L_per_min", "rate_mg_per_L_per_h", "R_squared", "R_squared_adj", "p_value", "total_incubation_time_min", "breusch_p_value", "slope_ratio", "0_min_concentration", "2_min_concentration", "last_concentration", "theoretical")
@@ -505,8 +505,8 @@ unique.incubations = unique(samples$Sample_Name)
    
     rate$Sample_Name[j] = as.character(data_site_subset_fin$Sample_Name[1])
     rate$slope_of_the_regression[j] = round(as.numeric((c)),3) #in mg O2/L min
-    rate$rate_mg_per_L_per_min[j] = round(abs(as.numeric((c))),3) #in mg O2/L min
-    rate$rate_mg_per_L_per_h[j] = round(abs(as.numeric((c))*60),3) #in mg O2/L h 
+    #rate$rate_mg_per_L_per_min[j] = round(abs(as.numeric((c))),3) #in mg O2/L min
+    rate$rate_mg_per_L_per_h[j] = round((as.numeric((c))*60),3) #in mg O2/L h 
     rate$R_squared[j] = round(as.numeric(abs(r)),3)
     rate$R_squared_adj[j] = round(as.numeric(abs(r.adj)),3)
     rate$p_value[j] = p
@@ -534,6 +534,8 @@ unique.incubations = unique(samples$Sample_Name)
     rate$break_point[j] = est
     
     rate$theoretical[j] = case_when(data_site_subset_fin$Elapsed_Minute[1] == 0 ~ "yes")
+    rate$mean_squared_error[j] = mean(res2^2)
+    
     
   }
   
@@ -565,12 +567,10 @@ removed <- data %>%
   mutate_all(~gsub("RATE_004", "N/A",.)) %>% 
   mutate_all(~gsub(";  N/A|; N/A|N/A; ", "",.)) 
 
-## Join Methods Deviations, Mean Slopes, and Original Slopes. Add RATE_005 deviation for slopes with theoretical 0 minute point. Add RATE_CV_010 deviation for sites with CV > 10%. CV calculated here from slope of regression. 
+## Join Methods Deviations, Mean Slopes, and Original Slopes. Add RATE_005 deviation for slopes with theoretical 0 minute point. 
 
 all.samples <-  left_join(removed, respiration, by = "Sample_Name") %>% 
-  separate(Sample_Name, into = c("EC", "kit", "rep"), sep = "_", remove = FALSE) %>% 
-  mutate(Treat = case_when(grepl("W",rep)~"Wet",
-                           grepl("D", rep) ~"Dry")) %>% 
+  separate(Sample_Name, into = c("RS", "kit", "rep"), sep = "_", remove = FALSE) %>% 
   mutate(Methods_Deviation.theoretical = if_else(number_of_points == 2 & `2_min_concentration` <= 0.09, "DTL_003; RATE_005", if_else(number_of_points == 2 & `2_min_concentration` <= 5.5, "RATE_005", NA_character_)))# %>%
   # mutate(`2_min_concentration` = case_when(Methods_Deviation.theoretical == "RATE_005" ~ -9999, TRUE ~ `2_min_concentration`))
 
@@ -586,9 +586,7 @@ boye <- all.samples %>%
   left_join(chem, by = "Sample_Name") %>% 
   rename(Methods_Deviation_chem = Methods_Deviation) %>% 
   left_join(lod_flag, by = "Sample_Name") %>% 
- # mutate(rate_mg_per_L_per_h = if_else(slope_of_the_regression>=0,0,rate_mg_per_L_per_h)) %>% #make positive slopes 0
-  #mutate(rate_mg_per_L_per_h = if_else(is.na(rate_mg_per_L_per_h), 9999, rate_mg_per_L_per_h)) %>%
-  mutate(Respiration_Rate_mg_DO_per_L_per_H = slope_of_the_regression*60) %>% # make rates positice 
+  mutate(Respiration_Rate_mg_DO_per_L_per_H = rate_mg_per_L_per_h) %>%
   mutate(Respiration_Rate_mg_DO_per_kg_per_H = if_else(Respiration_Rate_mg_DO_per_L_per_H > -9999, Respiration_Rate_mg_DO_per_L_per_H * (as.numeric(Incubation_Water_Mass_g)/as.numeric(Dry_Sediment_Mass_g)), -9999)) %>% # calculate mg DO/kg dry sediment values
   mutate(Respiration_Rate_mg_DO_per_kg_per_H = if_else(Incubation_Water_Mass_g == -9999, -9999, Respiration_Rate_mg_DO_per_kg_per_H)) %>% 
   mutate(Respiration_Rate_mg_DO_per_kg_per_H = round(Respiration_Rate_mg_DO_per_kg_per_H, 3)) %>% 
@@ -603,7 +601,7 @@ boye <- all.samples %>%
   mutate(Methods_Deviation = if_else(is.na(Methods_Deviation.theoretical), Methods_Deviation_do, paste(Methods_Deviation_do, Methods_Deviation.theoretical, sep = "; "))) %>% 
   mutate_all(~gsub("N/A; |N/A ; ", "",.)) %>%
   mutate(Methods_Deviation = if_else(grepl("RATE_003", Methods_Deviation), "N/A", Methods_Deviation)) %>% 
-  dplyr::select(c(Sample_Name, Material, SpC, pH, Temp, Respiration_Rate_mg_DO_per_L_per_H, Respiration_Rate_mg_DO_per_kg_per_H, Respiration_R_Squared, Respiration_R_Squared_Adj, Respiration_p_Value, Total_Incubation_Time_Min, Number_Points_In_Respiration_Regression, Number_Points_Removed_Respiration_Regression,  Methods_Deviation))
+  dplyr::select(c(Sample_Name, Material, mean_squared_error, SpC, pH, Temp, Respiration_Rate_mg_DO_per_L_per_H, Respiration_Rate_mg_DO_per_kg_per_H, Respiration_R_Squared, Respiration_R_Squared_Adj, Respiration_p_Value, Total_Incubation_Time_Min, Number_Points_In_Respiration_Regression, Number_Points_Removed_Respiration_Regression,  Methods_Deviation))
 
 boye %>% 
   mutate(Material = if_else(grepl("R0", Sample_Name), "Sediment", "Soil")) %>% 
@@ -617,23 +615,528 @@ ggplot(aes(x = as.numeric(Respiration_Rate_mg_DO_per_kg_per_H), fill = Material)
 
 output.path = paste0("C:/Users/",pnnl.user,"/OneDrive - PNNL/Shared Documents - Core Richland and Sequim Lab-Field Team/Data Generation and Files/ECA/INC/03_ProcessedData/")
   
-write.csv(boye, paste0("C:/GitHub/Cincinnati_Multireactor_Respiration/Data/RS_Sediment_Incubations_Respiration_Rates_ReadyForBoye_",Sys.Date(),".csv"), row.names = F)
+write.csv(boye, paste0("C:/GitHub/Cincinnati_Multireactor_Respiration/Data/RS_Sediment_Incubations_Respiration_Rates_Original_Script_",Sys.Date(),".csv"), row.names = F)
 
 ```
 
-```{r Non Linear Fits}
-# Make Data Frames
-non_linear_fit <- as.data.frame(matrix(NA, ncol = 7, nrow =1))
+## Make ECA rules less stringent
 
-colnames(non_linear_fit) = c("Sample_Name","b", "DO_mg_per_L_max", "p_value_a", "p_value_b", "total_incubation_time_min", "R_Squared")
+```{r Set Parameters}
+
+min.points = 2
+slope.thresh = 0 #-0.006 in original script
+do.thresh = 2
+high.do = 14
+time.thresh = 4
+fast = 5.5 #not applicable here
+bpfit = 0.1
+time.same = 7
+break.toggle = 1 #in eca 1.4
+conc.range = 0 #in eca 1.4
+plot.toggle = FALSE
+
+```
+## Fit a linear model to data with chosen rules
+
+```{r Start Loop for fitting Linear Models with original rules, echo = FALSE, warning = FALSE, message = FALSE, fig.height = 8, fig.wight = 8}
+
+# Make Data Frames
+respiration_new <- as.data.frame(matrix(NA, ncol = 18, nrow =1))
+
+colnames(respiration_new) = c("Sample_Name","slope_of_the_regression", "rate_mg_per_L_per_min", "rate_mg_per_L_per_h", "R_squared", "R_squared_adj",  "p_value", "total_incubation_time_min", "number_of_points", "no_points_rem",  "breusch_p_value","break_point", "slope_ratio",  "0_min_concentration", "2_min_concentration", "last_concentration", "theoretical", "mean_squared_error")
+
+rate_new = as.data.frame(matrix(NA, ncol = 14, nrow = length(unique(samples$Sample_Name))))
+  
+  colnames(rate_new) = c("Sample_Name", "slope_of_the_regression", "rate_mg_per_L_per_min", "rate_mg_per_L_per_h", "R_squared", "R_squared_adj", "p_value", "total_incubation_time_min", "breusch_p_value", "slope_ratio", "0_min_concentration", "2_min_concentration", "last_concentration", "theoretical")
 
 unique.incubations = unique(samples$Sample_Name)
 
   for (j in 1:length(unique.incubations)){
     
-    rate = as.data.frame(matrix(NA, ncol = 7, nrow = length(unique(samples$Sample_Name))))
+    
+    # Subset by individual sites
+    
+    data_site_subset = subset(samples, samples$Sample_Name == unique.incubations[j])
+    
+    # Put in ascending order for minutes
+    data_site_subset = data_site_subset[order(data_site_subset$Elapsed_Minute, decreasing = FALSE),]
+    data_site_subset$Elapsed_Minute = as.numeric(data_site_subset$Elapsed_Minute)
+    
+    # Fit linear model to all data
+    
+    fit_all = lm(DO_mg_per_L~Elapsed_Minute, data = data_site_subset)
+    
+    # Remove points greater than High Dissolved Oxygen Threshold
+    
+    data_site_subset_low = data_site_subset %>% 
+      filter(DO_mg_per_L < high.do) 
+    
+    # Fit linear model to slopes with High Dissolved Oxygen Points Removed
+    
+    fit_low = lm(DO_mg_per_L~Elapsed_Minute, data = data_site_subset_low)
+    
+    low.slope = fit_low$coefficients[[2]]
+    
+    # Remove samples if at > 4 minutes, they are below the DO threshold. This is removing low values from the back end of curves
+    
+    data_site_subset_thresh = data_site_subset_low %>% 
+      filter(!(Elapsed_Minute > 4 & DO_mg_per_L < do.thresh)) 
+    
+    data_site_subset_rem = data_site_subset_thresh
+    
+    # If the 2 minute concentration is less than the Dissolved Oxygen Threshold set to remove low values from the back end of the curve, remove anything greater than 2 minutes
+    
+    for(n in 1:2){
+      if(data_site_subset_rem$Elapsed_Minute[2] == 2 & data_site_subset_rem$DO_mg_per_L[2] <= do.thresh){
+        
+        data_site_subset_rem = data_site_subset_rem %>% 
+          filter(!Elapsed_Minute > 2 )
+        
+      }
+    }
+    
+    # Keep saturation point from samples with 2 minute point that starts below set threshold. 
+    
+    data_site_subset_fast = data_site_subset_rem
+    
+    
+    if (data_site_subset_fast$DO_mg_per_L[2] <= fast & data_site_subset_fast$Elapsed_Minute[2] <= time.thresh ){
+      
+      data_site_subset_fast = data_site_subset_fast
+      
+    } else if (data_site_subset_fast$DO_mg_per_L[2] >= fast){
+      
+      data_site_subset_fast = data_site_subset_fast[-1,]
+      
+    }
+    
+    # Remove 2 minute point if put on at same time as picture is taken
+    
+    data_site_subset_beg = data_site_subset_fast
+    
+    for (k in 1:2) {
+      
+      if (nrow(data_site_subset_beg) <= 2) {
+        
+        # If dataset only consists of 0 minute and 2 minute point, don't remove data
+        
+        data_site_subset_beg = data_site_subset_beg
+        
+      }
+      
+      else if (grepl("RATE_006", data_site_subset_beg$Methods_Deviation[k]) & ((data_site_subset_beg$DO_mg_per_L[k] > time.same & data_site_subset_beg$Elapsed_Minute[k] == 2))) {
+        
+        ## If samples were put on roller the same time as a picture was taken (indicated by RATE_006 Method Deviation) and the dissolved oxygen concentration is greater than the set threshold at the 2 minute measurement, remove the 2 minute point 
+        
+        data_site_subset_beg = data_site_subset_beg[-k,]
+        
+      }
+      
+    }
+    
+    # If the first point is 0, only keep 2 points 
+    
+    if (data_site_subset_beg$Elapsed_Minute[1] == 0) {
+      
+      data_site_subset_beg = head(data_site_subset_beg, 2)
+      
+    }
+    
+    # Fit linear model to cleaned data (low points removed, high points removed, first point removed if put on rollers at same time as picture) 
+    
+    fitog = lm(DO_mg_per_L~Elapsed_Minute, data = data_site_subset_beg)
+    slope_original = fitog$coefficients[[2]] #slope of original cleaned data
+    
+    # Calculate segmented regression slopes:
+    
+    if (nrow(data_site_subset_beg) > 3) {
+      
+      ## Only works if more than 3 rows of data, fits segmented regession and gets best estimate of where to break the data
+      
+      # psi gives estimated start point for the analysis
+      
+      segmentog = segmented(fitog, seg.Z = ~Elapsed_Minute, psi = (((max(data_site_subset_beg$Elapsed_Minute)-min(data_site_subset_beg$Elapsed_Minute))/2)+min(data_site_subset_beg$Elapsed_Minute)))
+      
+      fit_seg = numeric(length(data_site_subset_beg$Elapsed_Minute)) * NA
+      
+      # gives DO estimates for segmented regression lm
+      fit_seg[complete.cases(rowSums(cbind(data_site_subset_beg$DO_mg_per_L, data_site_subset_beg$Elapsed_Minute)))] <- broken.line(segmentog)$fit
+      
+      data_seg = data.frame(DO_mg_per_L = data_site_subset_beg$DO_mg_per_L, Elapsed_Minute = data_site_subset_beg$Elapsed_Minute, fit = fit_seg)
+      
+      # 1: Initial Break Point, 2: Chosen Break Point, 3: Approx. Standard Error
+      seg = segmentog$psi
+      #Chosen Break Point
+      est = seg[[2]]
+      #Standard Error
+      bp_se = seg[[3]]
+      #Rounded Break Point
+      data_site_subset_beg$break_point = 2*round(seg[[2]]/2)
+      
+      #Break Data at rounded value
+      data_site_subset_break = subset(data_site_subset_beg, Elapsed_Minute <= data_site_subset_beg$break_point[1])
+      
+    } else {
+      
+      # If number of rows < 3, don't fit segmented regression
+      
+      data_site_subset_beg = data_site_subset_beg
+      
+      est = "NA"
+      
+      data_site_subset_break = data_site_subset_beg
+      
+    }
+    
+    # Fit linear model to segmented data
+    fit_break = lm(DO_mg_per_L~Elapsed_Minute, data = data_site_subset_break)
+    u = fit_break$coefficients
+    b = u[[1]] #intercept
+    c = u[[2]] #slope
+    slope_beginning = c
+    r = summary(fit_break)$r.squared #r squared of segmented data
+    residuals = deviance(fit_break)
+    r.adj = summary(fit_break)$adj.r.squared
+    p = summary(fit_break)$coefficients[4]
+    pog = p
+    rog = r
+    resog = residuals
+    bp = bptest(fit_break)[[4]]
+    bpog = bptest(fit_break)[[4]]
+    
+    #Calculate ratio of slopes before and after segmented regression
+    
+    slope.ratio = fit_break$coefficients[[2]]/fitog$coefficients[[2]]
+    
+    #If ratio of slopes before/after segmented regression, the original slope is not flat, and the range of the concentrations from the unbroken data is > 1.4, then use the segmented regression
+    
+    if(slope.ratio > break.toggle & slope_original < slope.thresh & (first(data_site_subset_beg$DO_mg_per_L) - last(data_site_subset_beg$DO_mg_per_L)) > conc.range) {
+      
+      data_site_subset_fin = data_site_subset_break
+      
+    } else {
+      
+      data_site_subset_break = data_site_subset_beg
+      
+      data_site_subset_fin = data_site_subset_break
+      
+    }
+    
+    # Fit final lm to data after deciding to use segmented regression or not
+    fit_break = lm(DO_mg_per_L~Elapsed_Minute, data = data_site_subset_fin)
+    u = fit_break$coefficients
+    b = u[[1]] #intercept
+    c = u[[2]] #slope
+    slope_beginning = c
+    r = summary(fit_break)$r.squared
+    residuals = deviance(fit_break)
+    r.adj = summary(fit_break)$adj.r.squared
+    p = summary(fit_break)$coefficients[4]
+    pog = p
+    rog = r
+    resog = residuals
+    bp = bptest(fit_break)[[4]]
+    bpog = bptest(fit_break)[[4]]
+    
+    # Fit lm to data, this will change with loop
+    fit = lm(data_site_subset_fin$DO_mg_per_L~data_site_subset_fin$Elapsed_Minute)
+    u = fit$coefficients
+    b = u[[1]] #Intercept
+    c = u[[2]] #rate mg/L min
+    r = summary(fit)$r.squared
+    r.adj = summary(fit)$adj.r.squared
+    residuals = deviance(fit)
+    p = summary(fit)$coefficients[4]
+    r2 = r
+    res2 = residuals
+    bp = bptest(fit)[[4]]
+    
+    
+    
+    if (slope_beginning >= slope.thresh | ((first(data_site_subset_beg$DO_mg_per_L) - last(data_site_subset_beg$DO_mg_per_L)) < conc.range)) 
+      
+    {
+      
+      #if it has a flat slope, or original data has low concentration range in cleaned data, don't do anything else
+      
+      data_site_subset_fin = data_site_subset_fin
+      
+      fit = lm(data_site_subset_fin$DO_mg_per_L~data_site_subset_fin$Elapsed_Minute)
+      u = fit$coefficients
+      b = u[[1]] #Intercept
+      c = u[[2]] #rate mg/L min
+      r = summary(fit)$r.squared
+      r.adj = summary(fit)$adj.r.squared
+      residuals = deviance(fit)
+      p = summary(fit)$coefficients[4]
+      r2 = r
+      res2 = residuals
+      bp = bptest(fit)[[4]]
+      
+    }
+    
+    else {
+      
+      #else start looping to remove data
+      
+      for (l in 1:60) {
+        
+        if (nrow(data_site_subset_fin)<= min.points){
+          
+          #if there are more 2 or less points fit final lm to final data:
+          
+          data_site_subset_fin = data_site_subset_fin
+          
+          fit = lm(data_site_subset_fin$DO_mg_per_L~data_site_subset_fin$Elapsed_Minute)
+          u = fit$coefficients
+          b = u[[1]] #Intercept
+          c = u[[2]] #rate mg/L min
+          r = summary(fit)$r.squared
+          r.adj = summary(fit)$adj.r.squared
+          residuals = deviance(fit)
+          p = summary(fit)$coefficients[4]
+          r2 = r
+          res2 = residuals
+          bp = bptest(fit)[[4]]
+          
+        }
+        
+        else if (bp < bpfit & nrow(data_site_subset_fin) >= min.points){
+          
+          #Else if the p-value of the Breusch-Pagan Heteroscedasticity test is less than the threshold, start removing data from the back end until it is greater than threshold or there are only 2 points
+          
+          data_site_subset_fin = data_site_subset_fin[-nrow(data_site_subset_fin),]
+          
+          fit = lm(data_site_subset_fin$DO_mg_per_L~data_site_subset_fin$Elapsed_Minute)
+          u = fit$coefficients
+          b = u[[1]] #Intercept
+          c = u[[2]] #rate mg/L min
+          r = summary(fit)$r.squared
+          r.adj = summary(fit)$adj.r.squared
+          residuals = deviance(fit)
+          p = summary(fit)$coefficients[4]
+          r2 = r
+          res2 = residuals
+          bp = bptest(fit)[[4]]
+          
+        }
+        
+      }
+      
+      if (slope_beginning < 0 & c > 0){
+        
+        # If the slope of the final is positive, use the slope of the cleaned data
+        
+        data_site_subset_fin = data_site_subset_beg
+        
+        fit = lm(data_site_subset_fin$DO_mg_per_L~data_site_subset_fin$Elapsed_Minute)
+        u = fit$coefficients
+        b = u[[1]] #Intercept
+        c = u[[2]] #rate mg/L min
+        r = summary(fit)$r.squared
+        r.adj = summary(fit)$adj.r.squared
+        residuals = deviance(fit)
+        p = summary(fit)$coefficients[4]
+        r2 = r
+        res2 = residuals
+        bp = bptest(fit)[[4]]
+        
+      }
+      
+    }
+    
+    my.format <- "Slope: %s\nR2: %s\np: %s"  
+    my.formula <- y ~ x
+    
+    #Make Plots for the following fits: Final Data, Break Point Data, Cleaned Data, Original Data
+    
+    if (plot.toggle == TRUE) {
+      final <- ggplot(data_site_subset_fin, aes(x = Elapsed_Minute, y = DO_mg_per_L)) + coord_cartesian(ylim = c(min(data_site_subset_fin$DO_mg_per_L)-1,max(data_site_subset_fin$DO_mg_per_L)+1))+ 
+        geom_point(size = 2) + #expand_limits(x = 0, y = 0) +
+        geom_smooth(method = "lm", se=F, formula = my.formula) +
+        geom_label(aes(x = 0, y = max(DO_mg_per_L + 0.5)), size = 2.5, hjust = 0,
+                   label = paste("R2 = ", signif(summary(fit)$r.squared, 3),
+                                 "\nP = ", signif(summary(fit)$coefficients[[4]], 3),
+                                 "\nSlope = ", signif(fit$coefficients[[2]], 3)))+      theme_bw()+theme(legend.title = element_blank(),legend.background = element_rect(fill = 'NA'), legend.text = element_text(size = 12,face="bold"))+
+        labs(y = expression(Dissolved_Oxygen_mg_per_L), x = expression(Time_Elapsed_min))+ theme(axis.text.x=element_text(size = 12,face="bold"))+
+        ggtitle("Final " ,data_site_subset_fin$Sample_Name[1]) +
+        theme(plot.title = element_text(lineheight=.8, face="bold"))+
+        theme(axis.text.x=element_text(colour = c("black","black")))+
+        theme(aspect.ratio=1)+
+        theme(axis.text.y=element_text(size = 12,face="bold"))+
+        theme(axis.title.x =element_text(size = 12,face="bold"))+
+        theme(axis.title =element_text(size = 12,face="bold"))+
+        theme(axis.title.y =element_text(size = 12,face="bold"))
+      
+      clean <- ggplot(data_site_subset_beg, aes(x = Elapsed_Minute, y = DO_mg_per_L)) + coord_cartesian(ylim = c(0,15))+ geom_point(size = 2) + expand_limits(x = 0, y = 0) +
+        geom_smooth(method = "lm", se=F, formula = my.formula) +
+        geom_label(aes(x = 90, y = 10), size = 2.5, hjust = 0,
+                   label = paste("R2 = ", signif(summary(fitog)$r.squared, 3),
+                                 "\nP = ", signif(summary(fitog)$coefficients[[4]], 3),
+                                 "\nSlope = ", signif(fitog$coefficients[[2]], 3)))+
+        theme_bw()+theme(legend.title = element_blank(),legend.background = element_rect(fill = 'NA'), legend.text = element_text(size = 12,face="bold"))+
+        labs(y = expression(Dissolved_Oxygen_mg_per_L), x = expression(Time_Elapsed_min))+ theme(axis.text.x=element_text(size = 12,face="bold"))+
+        ggtitle("Cleaned" ,data_site_subset_fast$Sample_Name[1]) +
+        theme(plot.title = element_text(lineheight=.8, face="bold"))+
+        theme(axis.text.x=element_text(colour = c("black","black")))+
+        theme(aspect.ratio=1)+
+        theme(axis.text.y=element_text(size = 12,face="bold"))+
+        theme(axis.title.x =element_text(size = 12,face="bold"))+
+        theme(axis.title =element_text(size = 12,face="bold"))+
+        theme(axis.title.y =element_text(size = 12,face="bold"))
+      
+      break_rem <- ggplot(data_site_subset_break, aes(x = Elapsed_Minute, y = DO_mg_per_L)) + coord_cartesian(ylim = c(0,15))+ geom_point(size = 2) + expand_limits(x = 0, y = 0) +
+        geom_smooth(method = "lm", se=F, formula = my.formula) +
+        geom_label(aes(x = 0, y = 13), size = 2.5, hjust = 0,
+                   label = paste("R2 = ", signif(summary(fit_break)$r.squared, 3),
+                                 "\nP = ", signif(summary(fit_break)$coefficients[[4]], 3),
+                                 "\nSlope = ", signif(fit_break$coefficients[[2]], 3)))+
+        theme_bw()+theme(legend.title = element_blank(),legend.background = element_rect(fill = 'NA'), legend.text = element_text(size = 12,face="bold"))+
+        labs(y = expression(Dissolved_Oxygen_mg_per_L), x = expression(Time_Elapsed_min))+ theme(axis.text.x=element_text(size = 12,face="bold"))+
+        ggtitle("Break Point Removed ", data_site_subset_break$Sample_Name[1]) +
+        theme(plot.title = element_text(lineheight=.8, face="bold"))+
+        theme(axis.text.x=element_text(colour = c("black","black")))+
+        theme(aspect.ratio=1)+
+        theme(axis.text.y=element_text(size = 12,face="bold"))+
+        theme(axis.title.x =element_text(size = 12,face="bold"))+
+        theme(axis.title =element_text(size = 12,face="bold"))+
+        theme(axis.title.y =element_text(size = 12,face="bold"))
+      
+      all <- ggplot(data_site_subset, aes(x = Elapsed_Minute, y = DO_mg_per_L)) + coord_cartesian(ylim = c(0,15))+ geom_point(size = 2) + expand_limits(x = 0, y = 0) +
+        geom_smooth(method = "lm", se=F, formula = my.formula) +
+        geom_label(aes(x = 0, y = 13), size = 2.5, hjust = 0,
+                   label = paste("R2 = ", signif(summary(fit_all)$r.squared, 3),
+                                 "\nP = ", signif(summary(fit_all)$coefficients[[4]], 3),
+                                 "\nSlope = ", signif(fit_all$coefficients[[2]], 3)))+
+        theme_bw()+theme(legend.title = element_blank(),legend.background = element_rect(fill = 'NA'), legend.text = element_text(size = 12,face="bold"))+
+        labs(y = expression(Dissolved_Oxygen_mg_per_L), x = expression(Time_Elapsed_min))+ theme(axis.text.x=element_text(size = 12,face="bold"))+
+        ggtitle("No Points Removed " ,data_site_subset$Sample_Name[1]) +
+        theme(plot.title = element_text(lineheight=.8, face="bold"))+
+        theme(axis.text.x=element_text(colour = c("black","black")))+
+        theme(aspect.ratio=1)+
+        theme(axis.text.y=element_text(size = 12,face="bold"))+
+        theme(axis.title.x =element_text(size = 12,face="bold"))+
+        theme(axis.title =element_text(size = 12,face="bold"))+
+        theme(axis.title.y =element_text(size = 12,face="bold"))
+      
+      multi <- (final + break_rem + clean + all) +
+        plot_layout(widths = c(2,2))
+      
+      ggsave(file=paste0("C:/GitHub/Cincinnati_Multireactor_Respiration/Data/Plots/",data_site_subset$Sample_Name[1],".pdf"), width = 7, height = 7, units = "in")
+      
+    }
+   
+    rate_new$Sample_Name[j] = as.character(data_site_subset_fin$Sample_Name[1])
+    rate_new$slope_of_the_regression[j] = round(as.numeric((c)),3) #in mg O2/L min
+    #rate$rate_mg_per_L_per_min[j] = round(abs(as.numeric((c))),3) #in mg O2/L min
+    rate_new$rate_mg_per_L_per_h[j] = round((as.numeric((c))*60),3) #in mg O2/L h 
+    rate_new$R_squared[j] = round(as.numeric(abs(r)),3)
+    rate_new$R_squared_adj[j] = round(as.numeric(abs(r.adj)),3)
+    rate_new$p_value[j] = p
+    rate_new$total_incubation_time_min[j] = as.numeric(tail(data_site_subset_fin$Elapsed_Minute, n = 1) - head(data_site_subset_fin$Elapsed_Minute, n = 1)) 
+    
+    rate_new$number_of_points[j] = nrow(data_site_subset_fin)
+    rate_new$no_points_rem[j] = (as.numeric(nrow(data_site_subset)) - as.numeric(nrow(data_site_subset_fin)))
+    rate_new$breusch_p_value[j] = round(as.numeric(bp),3)
+    rate_new$slope_ratio[j] = round(as.numeric(slope.ratio),3)
+    rate_new$`0_min_concentration`[j] = ifelse(
+      first(data_site_subset_fin$Elapsed_Minute == 0), 
+      subset(data_site_subset_fin$DO_mg_per_L,                             data_site_subset_fin$Elapsed_Minute == 0),
+      "NA"
+    )
+    
+    rate_new$`2_min_concentration`[j] = ifelse(
+      first(data_site_subset_fin$Elapsed_Minute == 4), 
+      subset(data_site_subset_fin$DO_mg_per_L, 
+             data_site_subset_fin$Elapsed_Minute == 4),
+      subset(data_site_subset_fin$DO_mg_per_L,
+             data_site_subset_fin$Elapsed_Minute == 2)) 
+    
+    rate_new$last_concentration[j] = last(data_site_subset_break$DO_mg_per_L)
+    
+    rate_new$break_point[j] = est
+    
+    rate_new$theoretical[j] = case_when(data_site_subset_fin$Elapsed_Minute[1] == 0 ~ "yes")
+    rate_new$mean_squared_error[j] = mean(res2^2)
+    
+    
+  }
   
-  colnames(rate) = c("Sample_Name","b", "DO_mg_per_L_max", "p_value_a", "p_value_b", "total_incubation_time_min", "R_Squared")
+  rate_new = rate_new[!is.na(rate_new$Sample_Name),]   
+  # Combining the regression metrics across locations and unique incubations
+  respiration_new = rbind(respiration_new,rate_new)
+
+respiration_new = respiration_new[-1,]
+
+#write.csv(respiration,paste0(output.path,"Half_LOD_ECA_Sediment_Incubations_Respiration_Rates_",Sys.Date(),".csv"), row.names = F)
+
+```
+
+```{r Mass Basis for Less rules}
+
+## Join Methods Deviations, Mean Slopes, and Original Slopes. Add RATE_005 deviation for slopes with theoretical 0 minute point. 
+
+new.samples = left_join(removed, respiration_new, by = "Sample_Name") %>% 
+  separate(Sample_Name, into = c("RS", "kit", "rep"), sep = "_", remove = FALSE) %>% 
+  mutate(Methods_Deviation.theoretical = if_else(number_of_points == 2 & `2_min_concentration` <= 0.09, "DTL_003; RATE_005", if_else(number_of_points == 2 & `2_min_concentration` <= 5.5, "RATE_005", NA_character_)))# %>%
+  # mutate(`2_min_concentration` = case_when(Methods_Deviation.theoretical == "RATE_005" ~ -9999, TRUE ~ `2_min_concentration`))
+
+
+## Get respiration data in Boye format
+boye_new = new.samples %>% 
+  left_join(solid, by = "Sample_Name") %>%
+  rename(Methods_Deviation_do = Methods_Deviation.x) %>%
+  rename(Methods_Deviation_solid = Methods_Deviation.y) %>% 
+  left_join(chem, by = "Sample_Name") %>% 
+  rename(Methods_Deviation_chem = Methods_Deviation) %>% 
+  left_join(lod_flag, by = "Sample_Name") %>% 
+  mutate(Respiration_Rate_mg_DO_per_L_per_H = rate_mg_per_L_per_h) %>%
+  mutate(Respiration_Rate_mg_DO_per_kg_per_H = if_else(Respiration_Rate_mg_DO_per_L_per_H > -9999, Respiration_Rate_mg_DO_per_L_per_H * (as.numeric(Incubation_Water_Mass_g)/as.numeric(Dry_Sediment_Mass_g)), -9999)) %>% # calculate mg DO/kg dry sediment values
+  mutate(Respiration_Rate_mg_DO_per_kg_per_H = if_else(Incubation_Water_Mass_g == -9999, -9999, Respiration_Rate_mg_DO_per_kg_per_H)) %>% 
+  mutate(Respiration_Rate_mg_DO_per_kg_per_H = round(Respiration_Rate_mg_DO_per_kg_per_H, 3)) %>% 
+  mutate(Respiration_R_Squared = if_else(is.na(R_squared), -9999, if_else(R_squared == 1, -9999, R_squared))) %>%
+  mutate(Respiration_R_Squared_Adj = if_else(is.na(R_squared_adj), -9999, R_squared_adj)) %>%
+  mutate(p_value = if_else(is.na(p_value ), -9999, p_value)) %>%
+  mutate(Respiration_p_Value = round(p_value, 4)) %>%
+  mutate(Total_Incubation_Time_Min = if_else(is.na(total_incubation_time_min), -9999, if_else(total_incubation_time_min == 2, -9999, total_incubation_time_min))) %>% 
+  mutate(Number_Points_In_Respiration_Regression = if_else(is.na(number_of_points), as.numeric(-9999), if_else(number_of_points == 2, -9999, as.numeric(number_of_points)))) %>% 
+  mutate(Number_Points_Removed_Respiration_Regression = if_else(is.na(no_points_rem), -9999, if_else(grepl("RATE_005", Methods_Deviation.theoretical), -9999, no_points_rem))) %>% 
+  mutate(`2_min_concentration` = if_else(is.na(`2_min_concentration`), -9999, `2_min_concentration`)) %>%
+  mutate(Methods_Deviation = if_else(is.na(Methods_Deviation.theoretical), Methods_Deviation_do, paste(Methods_Deviation_do, Methods_Deviation.theoretical, sep = "; "))) %>% 
+  mutate_all(~gsub("N/A; |N/A ; ", "",.)) %>%
+  mutate(Methods_Deviation = if_else(grepl("RATE_003", Methods_Deviation), "N/A", Methods_Deviation)) %>% 
+  dplyr::select(c(Sample_Name, Material, mean_squared_error, SpC, pH, Temp, Respiration_Rate_mg_DO_per_L_per_H, Respiration_Rate_mg_DO_per_kg_per_H, Respiration_R_Squared, Respiration_R_Squared_Adj, Respiration_p_Value, Total_Incubation_Time_Min, Number_Points_In_Respiration_Regression, Number_Points_Removed_Respiration_Regression,  Methods_Deviation))
+
+boye_new %>% 
+  mutate(Material = if_else(grepl("R0", Sample_Name), "Sediment", "Soil")) %>% 
+  #filter(as.numeric(Respiration_Rate_mg_DO_per_kg_per_H) >-25) %>% 
+ggplot(aes(x = as.numeric(Respiration_Rate_mg_DO_per_kg_per_H), fill = Material)) + 
+  geom_histogram() + 
+  scale_fill_manual(values = c("Soil" = "#0072B2", "Sediment" = "#D55E00")) +
+  theme_bw()+
+  xlab(bquote("Respiration Rate (mg DO * kg"^ -1 *" * H" ^-1*")")) + 
+  theme(axis.title.x = element_text(size = 15))
+
+output.path = paste0("C:/Users/",pnnl.user,"/OneDrive - PNNL/Shared Documents - Core Richland and Sequim Lab-Field Team/Data Generation and Files/ECA/INC/03_ProcessedData/")
+  
+write.csv(boye_new, paste0("C:/GitHub/Cincinnati_Multireactor_Respiration/Data/RS_Sediment_Incubations_Respiration_Rates_New_Script_",Sys.Date(),".csv"), row.names = F)
+
+```
+
+
+```{r Non Linear Fits}
+# Make Data Frames
+non_linear_fit <- as.data.frame(matrix(NA, ncol = 7, nrow =1))
+
+colnames(non_linear_fit) = c("Sample_Name","b", "DO_mg_per_L_max", "p_value_a", "p_value_b", "total_incubation_time_min", "mean_squared_error")
+
+unique.incubations = unique(samples$Sample_Name)
+
+  for (j in 1:length(unique.incubations)){
+    
+    rate_nl = as.data.frame(matrix(NA, ncol = 7, nrow = length(unique(samples$Sample_Name))))
+  
+  colnames(rate_nl) = c("Sample_Name","b", "DO_mg_per_L_max", "p_value_a", "p_value_b", "total_incubation_time_min", "mean_squared_error")
     
     # Subset by individual sites
     
@@ -657,39 +1160,42 @@ unique.incubations = unique(samples$Sample_Name)
     p_value_a = summary(fit_all)$coefficients[7]
     p_value_b = summary(fit_all)$coefficients[8]
   AIC(fit_all)
-
+    predictions = predict(fit_all, data_site_subset)
+    residuals = data_site_subset$DO_mg_per_L - predictions
+  
 
       data_site_subset_fit = data_site_subset %>%
       mutate(Fitted = predict(fit_all, new_data = data_site_subset_fit))
 
-    fit_plot = ggplot(data_site_subset_fit, aes(x = Elapsed_Minute, y = DO_mg_per_L)) +
-    geom_point(color = 'blue') +
-    geom_line(aes(y = Fitted), color = 'red') +
-    labs(title = paste("Sample:", data_site_subset_fit$Sample_Name[1]),
-         subtitle = paste("a =", round(coef_vals[1], 4), ", b =", round(coef_vals[2], 4)),
-         x = "Elapsed Minute",
-         y = "DO mg/L") +
-    theme_minimal()
+    # fit_plot = ggplot(data_site_subset_fit, aes(x = Elapsed_Minute, y = DO_mg_per_L)) +
+    # geom_point(color = 'blue') +
+    # geom_line(aes(y = Fitted), color = 'red') +
+    # labs(title = paste("Sample:", data_site_subset_fit$Sample_Name[1]),
+    #      subtitle = paste("a =", round(coef_vals[1], 4), ", b =", round(coef_vals[2], 4)),
+    #      x = "Elapsed Minute",
+    #      y = "DO mg/L") +
+    # theme_minimal()
     
-    lin = ggplot(data_site_subset_fit, aes(x = log(DO_mg_per_L), y =t)) + 
-      geom_point()
+    # lin = ggplot(data_site_subset_fit, aes(x = log(DO_mg_per_L), y =t)) + 
+    #   geom_point()
 
    # ggsave(file=paste0("C:/GitHub/Cincinnati_Multireactor_Respiration/Data/Plots/Non_Linear_Fits/",data_site_subset_fit$Sample_Name[1],".pdf"), width = 7, height = 7, units = "in")
     
-    rate$Sample_Name[j] = as.character(data_site_subset_fit$Sample_Name[1])
-    rate$b[j] = as.numeric((coef_vals[2])) #in 1/ min
-    rate$DO_mg_per_L_max[j] = round(as.numeric((coef_vals[1])), 3) #in mg O2/L
-    rate$p_value_a[j] = p_value_a
-    rate$p_value_b[j] = p_value_b
+    rate_nl$Sample_Name[j] = as.character(data_site_subset_fit$Sample_Name[1])
+    rate_nl$b[j] = as.numeric((coef_vals[2])) #in 1/ min
+    rate_nl$DO_mg_per_L_max[j] = round(as.numeric((coef_vals[1])), 3) #in mg O2/L
+    rate_nl$p_value_a[j] = p_value_a
+    rate_nl$p_value_b[j] = p_value_b
     
-    rate$total_incubation_time_min[j] = as.numeric(tail(data_site_subset_fit$Elapsed_Minute, n = 1) - head(data_site_subset_fit$Elapsed_Minute, n = 1)) 
+    rate_nl$total_incubation_time_min[j] = as.numeric(tail(data_site_subset_fit$Elapsed_Minute, n = 1) - head(data_site_subset_fit$Elapsed_Minute, n = 1))
+    rate_nl$mean_squared_error[j] = mean(residuals^2)
     
     #rate$R_Squared[j] = R_Squared
     
     
-  rate = rate[!is.na(rate$Sample_Name),]   
+  rate_nl = rate_nl[!is.na(rate_nl$Sample_Name),]   
   # Combining the regression metrics across locations and unique incubations
- non_linear_fit = rbind(non_linear_fit,rate)
+ non_linear_fit = bind_rows(non_linear_fit,rate_nl)
     
   }
 
@@ -707,9 +1213,105 @@ ggplot(plot_df, aes(x = (b), fill = Material)) +
   xlab(bquote("b (hour"^-1 *")")) + 
   theme(axis.title.x = element_text(size = 15))
 
+write.csv(plot_df, paste0("C:/GitHub/Cincinnati_Multireactor_Respiration/Data/RS_Sediment_Incubations_Respiration_Rates_Non_Linear_Script_",Sys.Date(),".csv"), row.names = F)
 
 
 ```
+
+```{r  Combined Fluxes}
+
+hmr = read.csv("C:/GitHub/Cincinnati_Multireactor_Respiration/Data/HMR - RS_INC_Raw_DO_By_Min_HMR.csv") %>% 
+  rename(Sample_Name = Series)
+
+ggplot(hmr, aes(x = f0, fill = Method)) + 
+  geom_histogram()+ 
+  theme_bw() +
+  xlab("Flux (mg O2/L/hr)") + 
+  theme(axis.title.x = element_text(size = 15))
+
+com = left_join(boye, boye_new, by = "Sample_Name") %>% 
+    mutate(Respiration_Rate_mg_DO_per_L_per_H_original = as.numeric(Respiration_Rate_mg_DO_per_L_per_H.x)) %>% 
+  mutate(Respiration_Rate_mg_DO_per_kg_per_H_original = as.numeric(Respiration_Rate_mg_DO_per_kg_per_H.x)) %>% 
+  mutate(Respiration_Rate_mg_DO_per_L_per_H_new = as.numeric(Respiration_Rate_mg_DO_per_L_per_H.y)) %>% 
+  mutate(Respiration_Rate_mg_DO_per_kg_per_H_new = as.numeric(Respiration_Rate_mg_DO_per_kg_per_H.y)) %>% 
+  rename(mean_squared_error_original = mean_squared_error.x) %>% 
+  rename(mean_squared_error_new = mean_squared_error.y) %>% 
+  left_join(plot_df, by = "Sample_Name") %>% 
+  rename(mean_squared_error_non_linear = mean_squared_error) %>% 
+  left_join(hmr, by = "Sample_Name") %>% 
+  rename(flux_mg_DO_per_m2_per_min = f0) %>% 
+  rename(standard_error_hmr = f0.se) %>% 
+    dplyr::select(c(Sample_Name, Respiration_Rate_mg_DO_per_L_per_H_original, Respiration_Rate_mg_DO_per_kg_per_H_original,mean_squared_error_new, Respiration_Rate_mg_DO_per_L_per_H_new,  Respiration_Rate_mg_DO_per_kg_per_H_new,  mean_squared_error_original, b_hour, flux_mg_DO_per_m2_per_min, standard_error_hmr)) 
+
+write.csv(com, paste0("C:/GitHub/Cincinnati_Multireactor_Respiration/Data/RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_",Sys.Date(),".csv"), row.names = F)
+  
+
+com %>% 
+ # filter(Respiration_Rate_mg_DO_per_kg_per_H > -50) %>% 
+ggplot(aes(x = Respiration_Rate_mg_DO_per_kg_per_H, y = b_hour, color = Material.x)) + 
+  geom_point() + 
+  scale_color_manual(values = c("Soil" = "#0072B2", "Sediment" = "#D55E00")) +
+  ylab(bquote("b (hour"^-1 *")")) + 
+  guides(color = guide_legend("Material"))+
+  theme_bw()
+
+com %>% 
+  #filter(Respiration_Rate_mg_DO_per_kg_per_H > -50) %>% 
+  #filter(f0 >-100) %>% 
+ggplot(aes(x = Respiration_Rate_mg_DO_per_kg_per_H, y = f0)) + 
+  geom_point(aes(color = Material.x))+ 
+  scale_color_manual(values = c("Soil" = "#0072B2", "Sediment" = "#D55E00")) +
+  guides(color = guide_legend("Material"))+
+  theme_bw()
+
+com %>% 
+  filter(f0 > -100) %>% 
+ggplot(aes(y = b_hour, x = f0)) + 
+  geom_point(aes(color = Material.x))+ 
+  ylab(bquote("b (hour"^-1 *")")) + 
+  scale_color_manual(values = c("Soil" = "#0072B2", "Sediment" = "#D55E00")) +
+  guides(color = guide_legend("Material"))+
+  theme_bw()
+
+size = read_xlsx("C:/GitHub/Cincinnati_Multireactor_Respiration/Data/Particle_Size_Mapping.xlsx", col_names = c("Sample_Name", "Particle_Size"))
+
+com = com %>% 
+  left_join(size, by = "Sample_Name")
+
+ggplot(com, aes (x = Respiration_Rate_mg_DO_per_kg_per_H)) + 
+  geom_histogram(aes(fill = Particle_Size)) + 
+  theme_bw()
+
+```
+
+
+
+```{r comparison to ECA Coarse Sand}
+
+eca_rates = read.csv("C:/GitHub/ECA_Multireactor_Incubations/Data/EC_Sediment_SpC_pH_Temp_Respiration.csv", skip = 2) %>% 
+  filter(grepl("EC", Sample_Name)) %>% 
+  separate(Sample_Name, c("Sample_Name", "Rep"), sep = "_INC") %>% 
+  dplyr::select(c(Sample_Name, Respiration_Rate_mg_DO_per_kg_per_H))
+  
+
+eca_d50= read.csv("C:/GitHub/ECA_Multireactor_Incubations/Data/D50_Calculations.csv") %>% 
+  filter(d50 > 0.5) %>% 
+  mutate(Sample_Name = str_replace(Sample_Name, "_all", ""))
+
+coarse_eca = right_join(eca_rates, eca_d50, by = "Sample_Name") %>% 
+  filter(Respiration_Rate_mg_DO_per_kg_per_H != -9999) %>% 
+  mutate(Respiration_Rate_mg_DO_per_kg_per_H = as.numeric(Respiration_Rate_mg_DO_per_kg_per_H))
+
+ggplot() +
+    geom_density(com, mapping = aes(x = Respiration_Rate_mg_DO_per_kg_per_H, fill = "Cincinnati")) + 
+  geom_density(coarse_eca, mapping = aes(x = Respiration_Rate_mg_DO_per_kg_per_H, fill = "CONUS"), alpha = 0.5) + 
+  theme_bw() + 
+  xlim(-150, 5)
+
+
+```
+
+## Used this to look at differences in linear and non-linear fits
 
 ```{r Combine Linear and Non-Linear fits}
 # Make Data Frames
@@ -881,85 +1483,6 @@ ggplot(respiration, aes(x = b)) +
 
 
 write.csv(respiration, paste0(output.path,"Combined_Fits_RS_Sediment_Incubations_Respiration_Rates_",Sys.Date(),".csv"), row.names = F)
-
-
-```
-
-```{r HMR?}
-
-hmr = read.csv("C:/GitHub/Cincinnati_Multireactor_Respiration/Data/HMR - RS_INC_Raw_DO_By_Min_HMR.csv") %>% 
-  rename(Sample_Name = Series)
-
-ggplot(hmr, aes(x = f0, fill = Method)) + 
-  geom_histogram()+ 
-  theme_bw() +
-  xlab("Flux (mg O2/L/hr)") + 
-  theme(axis.title.x = element_text(size = 15))
-
-com = left_join(plot_df, boye, by = "Sample_Name") %>% 
-  mutate(Respiration_Rate_mg_DO_per_kg_per_H = as.numeric(Respiration_Rate_mg_DO_per_kg_per_H))
-
-
-com = com %>% left_join(hmr, by = "Sample_Name")
-
-com %>% 
- # filter(Respiration_Rate_mg_DO_per_kg_per_H > -50) %>% 
-ggplot(aes(x = Respiration_Rate_mg_DO_per_kg_per_H, y = b_hour, color = Material.x)) + 
-  geom_point() + 
-  scale_color_manual(values = c("Soil" = "#0072B2", "Sediment" = "#D55E00")) +
-  ylab(bquote("b (hour"^-1 *")")) + 
-  guides(color = guide_legend("Material"))+
-  theme_bw()
-
-com %>% 
-  #filter(Respiration_Rate_mg_DO_per_kg_per_H > -50) %>% 
-  #filter(f0 >-100) %>% 
-ggplot(aes(x = Respiration_Rate_mg_DO_per_kg_per_H, y = f0)) + 
-  geom_point(aes(color = Material.x))+ 
-  scale_color_manual(values = c("Soil" = "#0072B2", "Sediment" = "#D55E00")) +
-  guides(color = guide_legend("Material"))+
-  theme_bw()
-
-com %>% 
-  filter(f0 > -100) %>% 
-ggplot(aes(y = b_hour, x = f0)) + 
-  geom_point(aes(color = Material.x))+ 
-  ylab(bquote("b (hour"^-1 *")")) + 
-  scale_color_manual(values = c("Soil" = "#0072B2", "Sediment" = "#D55E00")) +
-  guides(color = guide_legend("Material"))+
-  theme_bw()
-
-size = read_xlsx("C:/GitHub/Cincinnati_Multireactor_Respiration/Data/Particle_Size_Mapping.xlsx", col_names = c("Sample_Name", "Particle_Size"))
-
-com = com %>% 
-  left_join(size, by = "Sample_Name")
-
-ggplot(com, aes (x = Respiration_Rate_mg_DO_per_kg_per_H)) + 
-  geom_histogram(aes(fill = Particle_Size)) + 
-  theme_bw()
-
-```
-```{r comparison to ECA Coarse Sand}
-
-eca_rates = read.csv("C:/GitHub/ECA_Multireactor_Incubations/Data/EC_Sediment_SpC_pH_Temp_Respiration.csv", skip = 2) %>% 
-  filter(grepl("EC", Sample_Name)) %>% 
-  separate(Sample_Name, c("Sample_Name", "Rep"), sep = "_INC") %>% 
-  dplyr::select(c(Sample_Name, Respiration_Rate_mg_DO_per_kg_per_H))
-  
-
-eca_d50= read.csv("C:/GitHub/ECA_Multireactor_Incubations/Data/D50_Calculations.csv") %>% 
-  filter(d50 > 0.5) %>% 
-  mutate(Sample_Name = str_replace(Sample_Name, "_all", ""))
-
-coarse_eca = right_join(eca_rates, eca_d50, by = "Sample_Name") %>% 
-  filter(Respiration_Rate_mg_DO_per_kg_per_H != -9999) %>% 
-  mutate(Respiration_Rate_mg_DO_per_kg_per_H = as.numeric(Respiration_Rate_mg_DO_per_kg_per_H))
-
-ggplot() +
-    geom_density(com, mapping = aes(x = Respiration_Rate_mg_DO_per_kg_per_H, fill = "Cincinnati")) + 
-  geom_density(coarse_eca, mapping = aes(x = Respiration_Rate_mg_DO_per_kg_per_H, fill = "CONUS"), alpha = 0.5) + 
-  theme_bw() + 
-  xlim(-150, 5)
 
 
 ```
