@@ -1241,7 +1241,7 @@ com = left_join(boye, boye_new, by = "Sample_Name") %>%
   left_join(hmr, by = "Sample_Name") %>% 
   rename(flux_mg_DO_per_m2_per_min = f0) %>% 
   rename(standard_error_hmr = f0.se) %>% 
-    dplyr::select(c(Sample_Name, Respiration_Rate_mg_DO_per_L_per_H_original, Respiration_Rate_mg_DO_per_kg_per_H_original,mean_squared_error_new, Respiration_Rate_mg_DO_per_L_per_H_new,  Respiration_Rate_mg_DO_per_kg_per_H_new,  mean_squared_error_original, b_hour, flux_mg_DO_per_m2_per_min, standard_error_hmr)) 
+    dplyr::select(c(Sample_Name, Respiration_Rate_mg_DO_per_L_per_H_original, Respiration_Rate_mg_DO_per_kg_per_H_original,mean_squared_error_original, Respiration_Rate_mg_DO_per_L_per_H_new,  Respiration_Rate_mg_DO_per_kg_per_H_new, mean_squared_error_new,  b_hour, mean_squared_error_non_linear, flux_mg_DO_per_m2_per_min, standard_error_hmr)) 
 
 write.csv(com, paste0("C:/GitHub/Cincinnati_Multireactor_Respiration/Data/RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_",Sys.Date(),".csv"), row.names = F)
   
