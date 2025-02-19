@@ -1,52 +1,52 @@
 Column_or_Row_Name,Unit,Definition,header_count,file_name
-A,m^2,cross sectional area of 50 mL tube,1,RS_INC_Raw_DO_By_Min_HMR.csv
-Concentration,mg L^-1,DO concentration in tube,1,RS_INC_Raw_DO_By_Min_HMR.csv
 DO_mg_per_L,mg L^-1,DO concentration in tube,1,RS_INC_Raw_DO_By_Min_ReadyForBoye_2024-08-28.csv
-DO_mg_per_L_max,mg L^-1,predicted DO when t = 0,2,"Combined_Fits_RS_Sediment_Incubations_Respiration_Rates_2024-11-05.csv, RS_Sediment_Incubations_Respiration_Rates_Non_Linear_Script_2024-11-12.csv"
 Dry_Sediment_Mass_g,g,dry sediment mass in incubation estimated using gravimetric moisture,1,RS_Drying_Masses_ReadyForBoye_on_2024-08-28.csv
 Elapsed_Minute,minute,minutes elapsed in incubation experiment,1,RS_INC_Raw_DO_By_Min_ReadyForBoye_2024-08-28.csv
 Gravimetric_Moisture,g g^-1,gravimetric moisture of sample (grams water per gram dry sediment),1,RS_Drying_Masses_ReadyForBoye_on_2024-08-28.csv
 Incubation_Water_Mass_g,g,water mass used in incubation,1,RS_Drying_Masses_ReadyForBoye_on_2024-08-28.csv
 Material,N/A,soil or sediment,4,"RS_Sediment_Incubations_Respiration_Rates_ReadyForBoye_2024-08-28.csv, RS_Sediment_Incubations_Respiration_Rates_New_Script_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_Non_Linear_Script_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_Original_Script_2024-11-12.csv"
-Method,N/A,"The method used for estimating the flux ('HMR', 'LR', 'No flux' or 'None')",1,HMR - RS_INC_Raw_DO_By_Min_HMR.csv
+mean_squared_error,N/A,mean squared error of fit,3,"RS_Sediment_Incubations_Respiration_Rates_New_Script_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_Non_Linear_Script_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_Original_Script_2024-11-12.csv"
 Methods_Deviation,N/A,methods deviations,5,"RS_Sediment_Incubations_Respiration_Rates_ReadyForBoye_2024-08-28.csv, RS_Drying_Masses_ReadyForBoye_on_2024-08-28.csv, RS_INC_Raw_DO_By_Min_ReadyForBoye_2024-08-28.csv, RS_Sediment_Incubations_Respiration_Rates_New_Script_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_Original_Script_2024-11-12.csv"
 Number_Points_In_Respiration_Regression,N/A,number of points included in final linear regression,3,"RS_Sediment_Incubations_Respiration_Rates_ReadyForBoye_2024-08-28.csv, RS_Sediment_Incubations_Respiration_Rates_New_Script_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_Original_Script_2024-11-12.csv"
 Number_Points_Removed_Respiration_Regression,N/A,number of points removed from final linear regression,3,"RS_Sediment_Incubations_Respiration_Rates_ReadyForBoye_2024-08-28.csv, RS_Sediment_Incubations_Respiration_Rates_New_Script_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_Original_Script_2024-11-12.csv"
-Prefilter,N/A,"The prefiltering classification ('Signal', 'Noise' or 'None')",1,HMR - RS_INC_Raw_DO_By_Min_HMR.csv
-Prefilter.p,N/A,The prefiltering p-value,1,HMR - RS_INC_Raw_DO_By_Min_HMR.csv
+pH,pH,pH measured after multireactor incubations,3,"RS_Sediment_Incubations_Respiration_Rates_ReadyForBoye_2024-08-28.csv, RS_Sediment_Incubations_Respiration_Rates_New_Script_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_Original_Script_2024-11-12.csv"
+Respiration_p_Value,N/A,p value of linear regression,3,"RS_Sediment_Incubations_Respiration_Rates_ReadyForBoye_2024-08-28.csv, RS_Sediment_Incubations_Respiration_Rates_New_Script_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_Original_Script_2024-11-12.csv"
 Respiration_R_Squared,N/A,R squared of linear regression,3,"RS_Sediment_Incubations_Respiration_Rates_ReadyForBoye_2024-08-28.csv, RS_Sediment_Incubations_Respiration_Rates_New_Script_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_Original_Script_2024-11-12.csv"
 Respiration_R_Squared_Adj,N/A,Adjusted R squared of linear regression,3,"RS_Sediment_Incubations_Respiration_Rates_ReadyForBoye_2024-08-28.csv, RS_Sediment_Incubations_Respiration_Rates_New_Script_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_Original_Script_2024-11-12.csv"
-Respiration_Rate_mg_DO_per_L_per_H,mg DO L^-1 H^-1,respiration rate of incubations,3,"RS_Sediment_Incubations_Respiration_Rates_ReadyForBoye_2024-08-28.csv, RS_Sediment_Incubations_Respiration_Rates_New_Script_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_Original_Script_2024-11-12.csv"
-Respiration_Rate_mg_DO_per_L_per_H_new,mg DO L^-1 H^-1,respiration rate fit with less  rules in ECA script,2,"RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_2024-11-13.csv"
-Respiration_Rate_mg_DO_per_L_per_H_original,mg DO L^-1 H^-1,respiration rate fit with original ECA script,2,"RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_2024-11-13.csv"
 Respiration_Rate_mg_DO_per_kg_per_H,mg DO kg^-1 H^-1,respiration rate in mg DO/kg/H corrected using dry mass of sediment and mass of water in incubation vial,3,"RS_Sediment_Incubations_Respiration_Rates_ReadyForBoye_2024-08-28.csv, RS_Sediment_Incubations_Respiration_Rates_New_Script_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_Original_Script_2024-11-12.csv"
-Respiration_Rate_mg_DO_per_kg_per_H_new,mg DO kg^-1 H^-1,respiration rate in mg DO/kg/H from respiration rate fit with less rules in ECA script corrected using dry mass of sediment and mass of water in incubation vial ,2,"RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_2024-11-13.csv"
-Respiration_Rate_mg_DO_per_kg_per_H_original,mg DO kg^-1 H^-1,respiration rate in mg DO/kg/H from respiration rate fit with original ECA script corrected using dry mass of sediment and mass of water in incubation vial ,2,"RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_2024-11-13.csv"
-Respiration_p_Value,N/A,p value of linear regression,3,"RS_Sediment_Incubations_Respiration_Rates_ReadyForBoye_2024-08-28.csv, RS_Sediment_Incubations_Respiration_Rates_New_Script_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_Original_Script_2024-11-12.csv"
+Respiration_Rate_mg_DO_per_L_per_H,mg DO L^-1 H^-1,respiration rate of incubations,3,"RS_Sediment_Incubations_Respiration_Rates_ReadyForBoye_2024-08-28.csv, RS_Sediment_Incubations_Respiration_Rates_New_Script_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_Original_Script_2024-11-12.csv"
 Sample_ID,N/A,Sample Name,1,RS_Drying_Masses_ReadyForBoye_on_2024-08-28.csv
 Sample_Name,N/A,Sample Name ,8,"Combined_Fits_RS_Sediment_Incubations_Respiration_Rates_2024-11-05.csv, RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_ReadyForBoye_2024-08-28.csv, RS_INC_Raw_DO_By_Min_ReadyForBoye_2024-08-28.csv, RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_2024-11-13.csv, RS_Sediment_Incubations_Respiration_Rates_New_Script_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_Non_Linear_Script_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_Original_Script_2024-11-12.csv"
-SatCrit.Warning,N/A,A character string with a warning message if flux limiting is active,1,HMR - RS_INC_Raw_DO_By_Min_HMR.csv
-Series,N/A,Sample Name,2,"HMR - RS_INC_Raw_DO_By_Min_HMR.csv, RS_INC_Raw_DO_By_Min_HMR.csv"
 SpC,uS/cm,specific conductance measured after multireactor incubations,3,"RS_Sediment_Incubations_Respiration_Rates_ReadyForBoye_2024-08-28.csv, RS_Sediment_Incubations_Respiration_Rates_New_Script_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_Original_Script_2024-11-12.csv"
 Temp,deg Celsius,temperature measured after multireactor incubations,3,"RS_Sediment_Incubations_Respiration_Rates_ReadyForBoye_2024-08-28.csv, RS_Sediment_Incubations_Respiration_Rates_New_Script_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_Original_Script_2024-11-12.csv"
-Time,minutes,time of incubation,1,RS_INC_Raw_DO_By_Min_HMR.csv
 Total_Incubation_Time_Min,minutes,total incubation time included in regression,3,"RS_Sediment_Incubations_Respiration_Rates_ReadyForBoye_2024-08-28.csv, RS_Sediment_Incubations_Respiration_Rates_New_Script_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_Original_Script_2024-11-12.csv"
-V,L,volume of 50 mL tube,1,RS_INC_Raw_DO_By_Min_HMR.csv
-Warning,N/A,A character string with a warning message in case of estimation problems,1,HMR - RS_INC_Raw_DO_By_Min_HMR.csv
-b,min^-1,slope from non-linear fit (ln DO = ln(a) + bt,2,"Combined_Fits_RS_Sediment_Incubations_Respiration_Rates_2024-11-05.csv, RS_Sediment_Incubations_Respiration_Rates_Non_Linear_Script_2024-11-12.csv"
-b_hour,hour^-1,slope from non-linear fit (ln DO = ln(a) + bt corrected to 1/hour,3,"RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_2024-11-13.csv, RS_Sediment_Incubations_Respiration_Rates_Non_Linear_Script_2024-11-12.csv"
-f0,mg DO m^-2 min^-1,Estimated flux,1,HMR - RS_INC_Raw_DO_By_Min_HMR.csv
-f0.lo95,mg DO m^-2 min^-1,lower end-point of the 95% confidence interval for the flux,1,HMR - RS_INC_Raw_DO_By_Min_HMR.csv
-f0.p,N/A,p-value of the null hypothesis of zero flux,1,HMR - RS_INC_Raw_DO_By_Min_HMR.csv
-f0.se,N/A,Standard error of estimated flux,1,HMR - RS_INC_Raw_DO_By_Min_HMR.csv
-f0.up95,mg DO m^-2 min^-1,upper end-point of the 95% confidence interval for the flux,1,HMR - RS_INC_Raw_DO_By_Min_HMR.csv
-flux_mg_DO_per_m2_per_min,mg DO m^-2 min^-1,flux from HMR fit,2,"RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_2024-11-13.csv"
-mean_squared_error,N/A,mean squared error of fit,3,"RS_Sediment_Incubations_Respiration_Rates_New_Script_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_Non_Linear_Script_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_Original_Script_2024-11-12.csv"
-mean_squared_error_new,N/A,"mean squared error of linear regression fit with ECA script with ""less"" rules",2,"RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_2024-11-13.csv"
-mean_squared_error_non_linear,N/A,mean squared error of non linear regression,1,RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_2024-11-13.csv
-mean_squared_error_original,N/A,mean squared error of linear regression fit with ECA script with original rules,2,"RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_2024-11-13.csv"
-pH,pH,pH measured after multireactor incubations,3,"RS_Sediment_Incubations_Respiration_Rates_ReadyForBoye_2024-08-28.csv, RS_Sediment_Incubations_Respiration_Rates_New_Script_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_Original_Script_2024-11-12.csv"
-p_value_a,N/A,p value of a coefficient from non-linear fit,2,"Combined_Fits_RS_Sediment_Incubations_Respiration_Rates_2024-11-05.csv, RS_Sediment_Incubations_Respiration_Rates_Non_Linear_Script_2024-11-12.csv"
-p_value_b,N/A,p value of b coefficient from non-linear fit,2,"Combined_Fits_RS_Sediment_Incubations_Respiration_Rates_2024-11-05.csv, RS_Sediment_Incubations_Respiration_Rates_Non_Linear_Script_2024-11-12.csv"
-standard_error_hmr,N/A,Standard error of estimated flux,2,"RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_2024-11-13.csv"
-total_incubation_time_min,minute,total incubation time used in non linear fit,2,"Combined_Fits_RS_Sediment_Incubations_Respiration_Rates_2024-11-05.csv, RS_Sediment_Incubations_Respiration_Rates_Non_Linear_Script_2024-11-12.csv"
+A,m^2,ARCHIVE. Cross sectional area of 50 mL tube,1,RS_INC_Raw_DO_By_Min_HMR.csv
+b,min^-1,ARCHIVE. slope from non-linear fit (ln DO = ln(a) + bt,2,"Combined_Fits_RS_Sediment_Incubations_Respiration_Rates_2024-11-05.csv, RS_Sediment_Incubations_Respiration_Rates_Non_Linear_Script_2024-11-12.csv"
+b_hour,hour^-1,ARCHIVE. slope from non-linear fit (ln DO = ln(a) + bt corrected to 1/hour,3,"RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_2024-11-13.csv, RS_Sediment_Incubations_Respiration_Rates_Non_Linear_Script_2024-11-12.csv"
+Concentration,mg L^-1,ARCHIVE. DO concentration in tube,1,RS_INC_Raw_DO_By_Min_HMR.csv
+DO_mg_per_L_max,mg L^-1,ARCHIVE. predicted DO when t = 0,2,"Combined_Fits_RS_Sediment_Incubations_Respiration_Rates_2024-11-05.csv, RS_Sediment_Incubations_Respiration_Rates_Non_Linear_Script_2024-11-12.csv"
+f0,mg DO m^-2 min^-1,ARCHIVE. Estimated flux,1,HMR - RS_INC_Raw_DO_By_Min_HMR.csv
+f0.lo95,mg DO m^-2 min^-1,ARCHIVE. lower end-point of the 95% confidence interval for the flux,1,HMR - RS_INC_Raw_DO_By_Min_HMR.csv
+f0.p,N/A,ARCHIVE. p-value of the null hypothesis of zero flux,1,HMR - RS_INC_Raw_DO_By_Min_HMR.csv
+f0.se,N/A,ARCHIVE. Standard error of estimated flux,1,HMR - RS_INC_Raw_DO_By_Min_HMR.csv
+f0.up95,mg DO m^-2 min^-1,ARCHIVE. upper end-point of the 95% confidence interval for the flux,1,HMR - RS_INC_Raw_DO_By_Min_HMR.csv
+flux_mg_DO_per_m2_per_min,mg DO m^-2 min^-1,ARCHIVE. flux from HMR fit,2,"RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_2024-11-13.csv"
+mean_squared_error_new,N/A,"ARCHIVE. mean squared error of linear regression fit with ECA script with ""less"" rules",2,"RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_2024-11-13.csv"
+mean_squared_error_non_linear,N/A,ARCHIVE. mean squared error of non linear regression,1,RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_2024-11-13.csv
+mean_squared_error_original,N/A,ARCHIVE. mean squared error of linear regression fit with ECA script with original rules,2,"RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_2024-11-13.csv"
+Method,N/A,"ARCHIVE. The method used for estimating the flux ('HMR', 'LR', 'No flux' or 'None')",1,HMR - RS_INC_Raw_DO_By_Min_HMR.csv
+p_value_a,N/A,ARCHIVE. p value of a coefficient from non-linear fit,2,"Combined_Fits_RS_Sediment_Incubations_Respiration_Rates_2024-11-05.csv, RS_Sediment_Incubations_Respiration_Rates_Non_Linear_Script_2024-11-12.csv"
+p_value_b,N/A,ARCHIVE. p value of b coefficient from non-linear fit,2,"Combined_Fits_RS_Sediment_Incubations_Respiration_Rates_2024-11-05.csv, RS_Sediment_Incubations_Respiration_Rates_Non_Linear_Script_2024-11-12.csv"
+Prefilter,N/A,"ARCHIVE. The prefiltering classification ('Signal', 'Noise' or 'None')",1,HMR - RS_INC_Raw_DO_By_Min_HMR.csv
+Prefilter.p,N/A,ARCHIVE. The prefiltering p-value,1,HMR - RS_INC_Raw_DO_By_Min_HMR.csv
+Respiration_Rate_mg_DO_per_kg_per_H_new,mg DO kg^-1 H^-1,ARCHIVE. respiration rate in mg DO/kg/H from respiration rate fit with less rules in ECA script corrected using dry mass of sediment and mass of water in incubation vial ,2,"RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_2024-11-13.csv"
+Respiration_Rate_mg_DO_per_kg_per_H_original,mg DO kg^-1 H^-1,ARCHIVE. respiration rate in mg DO/kg/H from respiration rate fit with original ECA script corrected using dry mass of sediment and mass of water in incubation vial ,2,"RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_2024-11-13.csv"
+Respiration_Rate_mg_DO_per_L_per_H_new,mg DO L^-1 H^-1,ARCHIVE. respiration rate fit with less  rules in ECA script,2,"RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_2024-11-13.csv"
+Respiration_Rate_mg_DO_per_L_per_H_original,mg DO L^-1 H^-1,ARCHIVE. respiration rate fit with original ECA script,2,"RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_2024-11-13.csv"
+SatCrit.Warning,N/A,ARCHIVE. A character string with a warning message if flux limiting is active,1,HMR - RS_INC_Raw_DO_By_Min_HMR.csv
+Series,N/A,ARCHIVE. Sample Name,2,"HMR - RS_INC_Raw_DO_By_Min_HMR.csv, RS_INC_Raw_DO_By_Min_HMR.csv"
+standard_error_hmr,N/A,ARCHIVE. Standard error of estimated flux,2,"RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_2024-11-12.csv, RS_Sediment_Incubations_Respiration_Rates_Combined_Rates_2024-11-13.csv"
+Time,minutes,ARCHIVE. time of incubation,1,RS_INC_Raw_DO_By_Min_HMR.csv
+total_incubation_time_min,minute,ARCHIVE. total incubation time used in non linear fit,2,"Combined_Fits_RS_Sediment_Incubations_Respiration_Rates_2024-11-05.csv, RS_Sediment_Incubations_Respiration_Rates_Non_Linear_Script_2024-11-12.csv"
+V,L,ARCHIVE. volume of 50 mL tube,1,RS_INC_Raw_DO_By_Min_HMR.csv
+Warning,N/A,ARCHIVE. A character string with a warning message in case of estimation problems,1,HMR - RS_INC_Raw_DO_By_Min_HMR.csv
