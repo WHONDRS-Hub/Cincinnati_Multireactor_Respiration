@@ -4,13 +4,18 @@ This repository is for data and scripts for processing multireactor data associa
 
   - **Data**
     - [RS_INC_Raw_DO_By_Min_ReadyForBoye_2024-08-28.csv](https://github.com/WHONDRS-Hub/Cincinnati_Multireactor_Respiration/blob/main/Data/RS_INC_Raw_DO_By_Min_ReadyForBoye_2024-08-28.csv): Raw DO data for each site with time and methods deviations
-    - [RS_INC_Raw_DO_By_Min_HMR.csv](https://github.com/WHONDRS-Hub/Cincinnati_Multireactor_Respiration/blob/main/Data/RS_INC_Raw_DO_By_Min_HMR.csv): Raw DO in format needed for hmr R library
-    - [RS_Drying_Masses_ReadyForBoye_on_2024-08-28.csv](https://github.com/WHONDRS-Hub/Cincinnati_Multireactor_Respiration/blob/main/Data/RS_Drying_Masses_ReadyForBoye_on_2024-08-28.csv): Dry sediment mass and mass fo water used in incubation used to convert rates to per mass basis
-    - [Combined_Fits_RS_Sediment_Incubations_Respiration_Rates_2024-11-05.csv](https://github.com/WHONDRS-Hub/Cincinnati_Multireactor_Respiration/blob/main/Data/Combined_Fits_RS_Sediment_Incubations_Respiration_Rates_2024-11-05.csv): Combined linera and non-linear fits (no data points removed)
-    - [HMR-RS_INC_Raw_DO_By_Min_HMR.csv](https://github.com/WHONDRS-Hub/Cincinnati_Multireactor_Respiration/blob/main/Data/HMR%20-%20RS_INC_Raw_DO_By_Min_HMR.csv): output from HMR R library
-  
+    - [RS_Drying_Masses_ReadyForBoye_on_2024-08-28.csv](https://github.com/WHONDRS-Hub/Cincinnati_Multireactor_Respiration/blob/main/Data/RS_Drying_Masses_ReadyForBoye_on_2024-08-28.csv): Dry sediment mass and mass of water used in incubation used to convert rates to per mass basis
+    - [RS_Sediment_Incubations_Respiration_Rates_Original_Script_2024-11-12.csv](https://github.com/WHONDRS-Hub/Cincinnati_Multireactor_Respiration/blob/main/Data/RS_Sediment_Incubations_Respiration_Rates_Original_Script_2024-11-12.csv): Respiration rates fit to data using rules set for other ECA incubations (information in methods code)
+    - **Plots**
+      - [Linear_Fits](https://github.com/WHONDRS-Hub/Cincinnati_Multireactor_Respiration/tree/main/Data/Plots/Linear_Fits): Images of linear regressions fit to DO data. Four plots per sample that correspond to rules in script that remove data points.
+        - **Archive**
+          - Plots for other data fits (non linear, less stringent linear regression rules)  
+    - **Archive**
+      -  [RS_INC_Raw_DO_By_Min_HMR.csv](https://github.com/WHONDRS-Hub/Cincinnati_Multireactor_Respiration/blob/main/Data/RS_INC_Raw_DO_By_Min_HMR.csv): Raw DO in format needed for hmr R library
+      -  [Combined_Fits_RS_Sediment_Incubations_Respiration_Rates_2024-11-05.csv](https://github.com/WHONDRS-Hub/Cincinnati_Multireactor_Respiration/blob/main/Data/Combined_Fits_RS_Sediment_Incubations_Respiration_Rates_2024-11-05.csv): Combined linear and non-linear fits (no data points removed)
+      -  [HMR-RS_INC_Raw_DO_By_Min_HMR.csv](https://github.com/WHONDRS-Hub/Cincinnati_Multireactor_Respiration/blob/main/Data/HMR%20-%20RS_INC_Raw_DO_By_Min_HMR.csv): output from HMR R library
   - **Scripts**
-    - [Multireactor_Rate_Processing](https://github.com/WHONDRS-Hub/Cincinnati_Multireactor_Respiration/blob/main/Scripts/Multireactor_Rate_Processing.Rmd): Comparing rules set for initial ECA analysis, changed to fit Cincinnati data. Also compares non-linear fit (a*exp(b*t)
-    - [HMR_Script](https://github.com/WHONDRS-Hub/Cincinnati_Multireactor_Respiration/blob/main/Scripts/HMR_Script.R): script that uses HMR library in R to choose linear/non-linear fit for each data point
+    - [Multireactor_Rate_Processing](https://github.com/WHONDRS-Hub/Cincinnati_Multireactor_Respiration/blob/main/Scripts/Multireactor_Rate_Processing.Rmd): Calculates and exports respiration rates for original ECA fit (chosen for your data), less rules in ECA fit, and non-linear fit (a*exp(b*t).
+    - [HMR_Script](https://github.com/WHONDRS-Hub/Cincinnati_Multireactor_Respiration/blob/main/Scripts/HMR_Script.R): script that uses HMR library in R to choose linear/non-linear fit for each data point (not used)
 
 
