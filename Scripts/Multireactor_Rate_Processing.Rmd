@@ -12,9 +12,6 @@ output: html_document
 
 ## Outputs are respiration rates (slope of oxygen consumption over 2 hour incubation) with SpC, pH, and Temperature added 
 
-## To Do:
-# Change drying masses to published file
-# Change raw DO to published file
 
   
 ```{r setup, include=FALSE}
@@ -95,7 +92,7 @@ data = read.csv(input.path)
 ```{r Set Parameters}
 
 min.points = 2
-slope.thresh = -0.006 
+slope.thresh = -0.006 # this threshold making it so that points are not being removed in your data
 do.thresh = 2
 high.do = 14
 time.thresh = 4
@@ -619,7 +616,7 @@ write.csv(boye, paste0("C:/GitHub/Cincinnati_Multireactor_Respiration/Data/RS_Se
 
 ```
 
-## Make ECA rules less stringent
+## Make ECA rules less stringent (not chosen)
 
 ```{r Set Parameters}
 
@@ -1122,7 +1119,7 @@ output.path = paste0("C:/Users/",pnnl.user,"/OneDrive - PNNL/Shared Documents - 
 write.csv(boye_new, paste0("C:/GitHub/Cincinnati_Multireactor_Respiration/Data/RS_Sediment_Incubations_Respiration_Rates_New_Script_",Sys.Date(),".csv"), row.names = F)
 
 ```
-
+## Fit non-linear function (not chosen)
 
 ```{r Non Linear Fits}
 # Make Data Frames
